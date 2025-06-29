@@ -1,108 +1,166 @@
 export interface User {
-  id: string;
-  email: string;
-  firstName: string;
+  id: number;
+  name: string;
   lastName: string;
-  role: 'admin' | 'mechanic' | 'receptionist';
-  isActive: boolean;
-  createdAt: string;
+  email: string;
+  passwordHash: string;
+  username: string;
+  userRoles?: UserRole;
+  userSpecializations?: UserSpecialization;
+  serviceOrders?: ServiceOrder;
+  diagnostics?: Diagnostic;
+  auditoryRecords?: Auditory;
+  roles?: Role;
 }
 
 export interface Client {
-  id: string;
-  firstName: string;
+  id: number;
+  name: string;
   lastName: string;
-  email: string;
   phone: string;
-  address: string;
-  createdAt: string;
-  updatedAt: string;
+  email: string;
+  identification: string;
+  vehicles?: Vehicle;
 }
 
 export interface Vehicle {
-  id: string;
-  clientId: string;
-  vin: string;
-  make: string;
+  id: number;
+  idClient: number;
+  brand: string;
   model: string;
   year: number;
-  color: string;
-  licensePlate: string;
+  serialNumberVIN: string;
   mileage: number;
   client?: Client;
-  createdAt: string;
-  updatedAt: string;
+  serviceOrders?: ServiceOrder;
 }
 
 export interface ServiceOrder {
-  id: string;
-  clientId: string;
-  vehicleId: string;
-  mechanicId: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  description: string;
-  estimatedCost: number;
-  totalCost: number;
-  startDate: string;
-  completionDate?: string;
-  client?: Client;
+  id: number;
+  idVehicle: number;
+  idUser: number;
+  idServiceType: number;
+  idState: number;
+  entryDate: string;
+  exitDate: string;
+  clientMessage: string;
   vehicle?: Vehicle;
-  mechanic?: User;
-  parts?: OrderPart[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Part {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  brand: string;
-  price: number;
-  stockQuantity: number;
-  minimumStock: number;
-  category: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface OrderPart {
-  id: string;
-  orderId: string;
-  partId: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  part?: Part;
+  user?: User;
+  serviceType?: ServiceType;
+  state?: State;
+  detailsDiagnostics?: DetailsDiagnostic;
+  orderDetails?: OrderDetails;
+  inventoryDetails?: InventoryDetail;
+  invoice?: Invoice;
 }
 
 export interface Invoice {
-  id: string;
-  orderId: string;
-  invoiceNumber: string;
-  clientId: string;
-  totalAmount: number;
-  taxAmount: number;
-  subtotal: number;
-  status: 'draft' | 'sent' | 'paid' | 'overdue';
+  id: number;
+  idServiceOrder: number;
   issueDate: string;
-  dueDate: string;
-  order?: ServiceOrder;
-  client?: Client;
-  createdAt: string;
+  laborTotal: number;
+  replacementsTotal: number;
+  totalAmount: number;
+  serviceOrders?: ServiceOrder;
 }
 
-export interface AuditLog {
-  id: string;
-  userId: string;
-  action: string;
-  entity: string;
-  entityId: string;
-  oldValues?: Record<string, any>;
-  newValues?: Record<string, any>;
-  timestamp: string;
+export interface Auditory {
+  id: number;
+  entityName: string;
+  changeType: string;
+  changedBy: string;
+  date: string;
+}
+
+export interface DetailsDiagnostic {
+  idServiceOrder: number;
+  idDiagnostic: number;
+  serviceOrder?: ServiceOrder;
+  diagnostic?: Diagnostic;
+}
+
+export interface Diagnostic {
+  id: number;
+  idUser: number;
+  description: string;
   user?: User;
+  detailsDiagnostics?: DetailsDiagnostic;
+}
+
+export interface Inventory {
+  id: number;
+  name: string;
+  inventoryDetails?: InventoryDetail;
+}
+
+export interface InventoryDetail {
+  id: number;
+  idOrder: number;
+  idInventory: number;
+  quantity: number;
+  serviceOrder?: ServiceOrder;
+  inventory?: Inventory;
+}
+
+export interface OrderDetails {
+  id: number;
+  idOrder: number;
+  idReplacement: number;
+  quantity: number;
+  totalCost: number;
+  serviceOrder?: ServiceOrder;
+  replacement?: Replacement;
+}
+
+export interface Replacement {
+  id: number;
+  code: string;
+  description: string;
+  stockQuantity: number;
+  minimumStock?: number;
+  unitPrice: number;
+  category: string;
+  orderDetails?: OrderDetails;
+}
+
+export interface Role {
+  id: number;
+  description: string;
+  userRoles?: UserRole;
+  users?: User;
+}
+
+export interface ServiceType {
+  id: number;
+  duration: number;
+  description: string;
+  serviceOrders?: ServiceOrder;
+}
+
+export interface Specialization {
+  id: number;
+  name: string;
+  userSpecializations?: UserSpecialization;
+}
+
+export interface State {
+  id: number;
+  stateType: string;
+  serviceOrders?: ServiceOrder;
+}
+
+export interface UserRole {
+  idUser: number;
+  idRole: number;
+  user?: User;
+  role?: Role;
+}
+
+export interface UserSpecialization {
+  idUser: number;
+  idSpecialization: number;
+  user?: User;
+  specialization?: Specialization;
 }
 
 export interface PaginatedResponse<T> {
