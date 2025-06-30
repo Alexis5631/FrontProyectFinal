@@ -44,7 +44,7 @@ export const ReceptionistDashboard: React.FC = () => {
     if (navigator.userAgent.includes('Mobile')) {
       window.location.href = `tel:${client.phone}`;
     } else {
-      alert(`Calling ${client.firstName} ${client.lastName} at ${client.phone}`);
+      alert(`Calling ${client.name} ${client.lastName} at ${client.phone}`);
     }
   };
 
@@ -83,8 +83,8 @@ export const ReceptionistDashboard: React.FC = () => {
     return <LoadingSpinner className="h-64" />;
   }
 
-  const pendingOrders = todayOrders.filter(order => order.status === 'pending');
-  const inProgressOrders = todayOrders.filter(order => order.status === 'in_progress');
+  const pendingOrders = todayOrders.filter(order => order.state?.stateType === 'pending');
+  const inProgressOrders = todayOrders.filter(order => order.state?.stateType === 'in_progress');
 
   const quickActions = [
     {
@@ -218,7 +218,7 @@ export const ReceptionistDashboard: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <h4 className="text-sm font-medium text-gray-900">
-                        {client.firstName} {client.lastName}
+                        {client.name} {client.lastName}
                       </h4>
                       <div className="flex items-center space-x-4 mt-1">
                         <span className="flex items-center text-xs text-gray-500">
@@ -295,38 +295,6 @@ export const ReceptionistDashboard: React.FC = () => {
           >
             View All
           </Button>
-        </div>
-        <div className="divide-y divide-gray-200">
-          {todayOrders.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              No orders scheduled for today
-            </div>
-          ) : (
-            todayOrders.slice(0, 5).map((order) => (
-              <div key={order.id} className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="text-sm font-medium text-gray-900">
-                        Order #{order.id.slice(-6)}
-                      </h4>
-                      <StatusBadge status={order.status} variant="order" />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {order.client?.firstName} {order.client?.lastName} - {order.vehicle?.make} {order.vehicle?.model}
-                    </p>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleViewOrder(order)}
-                  >
-                    View
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
         </div>
       </div>
     </div>
