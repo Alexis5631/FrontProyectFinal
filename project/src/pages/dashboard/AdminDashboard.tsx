@@ -55,35 +55,6 @@ export const AdminDashboard: React.FC = () => {
     await fetchStats();
   };
 
-  const handleExportReport = () => {
-    const reportData = {
-      generatedAt: new Date().toISOString(),
-      stats,
-      summary: {
-        totalRevenue: stats?.monthlyRevenue || 0,
-        totalOrders: stats?.completedOrdersThisMonth || 0,
-        averageOrderValue: stats?.monthlyRevenue && stats?.completedOrdersThisMonth 
-          ? (stats.monthlyRevenue / stats.completedOrdersThisMonth).toFixed(2)
-          : 0,
-      }
-    };
-
-    const dataStr = JSON.stringify(reportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleViewAnalytics = () => {
-    alert('Advanced analytics dashboard will open here with detailed charts and reports.');
-  };
-
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'add-client':
@@ -202,22 +173,6 @@ export const AdminDashboard: React.FC = () => {
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportReport}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export Report
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleViewAnalytics}
-          >
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Analytics
           </Button>
         </div>
       </div>
