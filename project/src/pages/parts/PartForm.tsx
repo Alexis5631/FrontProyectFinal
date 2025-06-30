@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Button } from '../../components/common/Button';
 import { Part } from '../../types';
-import { api } from '../../services/api';
+import { getReplacement, posReplacement, putReplacement } from '../../APIS/ReplacementApis';
 
 const schema = yup.object().shape({
   code: yup.string().required('Part code is required'),
@@ -82,9 +82,9 @@ export const PartForm: React.FC<PartFormProps> = ({
   const onSubmit = async (data: PartFormData) => {
     try {
       if (mode === 'create') {
-        await api.parts.create(data);
+        await posReplacement(data as any);
       } else if (mode === 'edit' && part) {
-        await api.parts.update(part.id, data);
+        await putReplacement(data as any, part.id);
       }
       onSuccess();
     } catch (error) {

@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Button } from '../../components/common/Button';
 import { Vehicle, Client } from '../../types';
-import { api } from '../../services/api';
+import { getVehicle, postVehicle, putVehicle } from '../../APIS/VehicleApis';
 
 const schema = yup.object().shape({
   clientId: yup.string().required('Client is required'),
@@ -54,18 +54,9 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
   });
 
   useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const response = await api.clients.getAll({ pageSize: 100 });
-        setClients(response.data.data);
-      } catch (error) {
-        console.error('Failed to fetch clients:', error);
-      } finally {
-        setLoadingClients(false);
-      }
-    };
-
-    fetchClients();
+    // Aquí deberías obtener los clientes reales si tienes endpoint, si no, dejar vacío
+    setClients([]);
+    setLoadingClients(false);
   }, []);
 
   useEffect(() => {
@@ -86,9 +77,9 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
   const onSubmit = async (data: VehicleFormData) => {
     try {
       if (mode === 'create') {
-        await api.vehicles.create(data);
+        await postVehicle(data as any); // Ajusta el tipo según tu modelo
       } else if (mode === 'edit' && vehicle) {
-        await api.vehicles.update(vehicle.id, data);
+        await putVehicle(data as any, vehicle.id);
       }
       onSuccess();
     } catch (error) {

@@ -13,6 +13,7 @@ import { useApi } from '../../hooks/useApi';
 import { usePagination } from '../../hooks/usePagination';
 import { OrderForm } from './OrderForm';
 import { format } from 'date-fns';
+import { getOrderDetails } from '../../APIS/OrderDetailsApis';
 
 export const OrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
@@ -23,38 +24,38 @@ export const OrdersPage: React.FC = () => {
   const [sortKey, setSortKey] = useState<string>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const location = useLocation();
   const pagination = usePagination({ initialPageSize: 20 });
-  const { data, loading, error, execute } = useApi(api.serviceOrders.getAll);
 
-  // Check if we should open modal from navigation state
+  // Modal desde navegación
   useEffect(() => {
     if (location.state?.openModal && location.state?.mode) {
       setModalMode(location.state.mode);
       setIsModalOpen(true);
-      // Clear the state to prevent reopening on refresh
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
+  // Obtener órdenes reales
   const fetchOrders = useCallback(async () => {
-    const params = {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      search: searchTerm,
-      sortBy: sortKey,
-      sortOrder: sortDirection,
-      ...(statusFilter && { status: statusFilter }),
-    };
-    
+    setLoading(true);
+    setError(null);
     try {
-      const response = await execute(params);
-      setOrders(response.data);
-    } catch (error) {
-      console.error('Failed to fetch orders:', error);
+      const data = await getOrderDetails();
+      if (data) {
+        setOrders(data as any); // Ajustar el tipo si es necesario
+      } else {
+        setOrders([]);
+      }
+    } catch (err) {
+      setError('Error al cargar órdenes');
+    } finally {
+      setLoading(false);
     }
-  }, [execute, pagination.page, pagination.pageSize, searchTerm, sortKey, sortDirection, statusFilter]);
+  }, []);
 
   useEffect(() => {
     fetchOrders();
@@ -372,12 +373,12 @@ export const OrdersPage: React.FC = () => {
           loading={loading}
           error={error}
           pagination={
-            data
+            orders.length > 0
               ? {
                   page: pagination.page,
                   pageSize: pagination.pageSize,
-                  total: data.total,
-                  totalPages: data.totalPages,
+                  total: orders.length,
+                  totalPages: 1,
                   onPageChange: pagination.setPage,
                   onPageSizeChange: pagination.setPageSize,
                 }

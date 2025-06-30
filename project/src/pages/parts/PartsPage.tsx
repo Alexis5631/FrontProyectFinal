@@ -13,6 +13,7 @@ import { useApi } from '../../hooks/useApi';
 import { usePagination } from '../../hooks/usePagination';
 import { PartForm } from './PartForm';
 import { format } from 'date-fns';
+import { getReplacement } from '../../APIS/ReplacementApis';
 
 export const PartsPage: React.FC = () => {
   const [parts, setParts] = useState<Part[]>([]);
@@ -22,37 +23,38 @@ export const PartsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState<string>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const location = useLocation();
   const pagination = usePagination({ initialPageSize: 20 });
-  const { data, loading, error, execute } = useApi(api.parts.getAll);
 
-  // Check if we should open modal from navigation state
+  // Modal desde navegación
   useEffect(() => {
     if (location.state?.openModal && location.state?.mode) {
       setModalMode(location.state.mode);
       setIsModalOpen(true);
-      // Clear the state to prevent reopening on refresh
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
+  // Obtener repuestos reales
   const fetchParts = useCallback(async () => {
-    const params = {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      search: searchTerm,
-      sortBy: sortKey,
-      sortOrder: sortDirection,
-    };
-    
+    setLoading(true);
+    setError(null);
     try {
-      const response = await execute(params);
-      setParts(response.data);
-    } catch (error) {
-      console.error('Failed to fetch parts:', error);
+      const data = await getReplacement();
+      if (data) {
+        setParts(data as any); // Ajustar el tipo si es necesario
+      } else {
+        setParts([]);
+      }
+    } catch (err) {
+      setError('Error al cargar repuestos');
+    } finally {
+      setLoading(false);
     }
-  }, [execute, pagination.page, pagination.pageSize, searchTerm, sortKey, sortDirection]);
+  }, []);
 
   useEffect(() => {
     fetchParts();
@@ -216,12 +218,12 @@ export const PartsPage: React.FC = () => {
           loading={loading}
           error={error}
           pagination={
-            data
+            parts.length > 0
               ? {
                   page: pagination.page,
                   pageSize: pagination.pageSize,
-                  total: data.total,
-                  totalPages: data.totalPages,
+                  total: parts.length,
+                  totalPages: 1,
                   onPageChange: pagination.setPage,
                   onPageSizeChange: pagination.setPageSize,
                 }

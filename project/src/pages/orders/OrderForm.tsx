@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Button } from '../../components/common/Button';
 import { ServiceOrder, Client, Vehicle, User, Part } from '../../types';
-import { api } from '../../services/api';
+import { getOrderDetails, postOrderDetails, putOrderDetails } from '../../APIS/OrderDetailsApis';
 
 const schema = yup.object().shape({
   clientId: yup.string().required('Client is required'),
@@ -66,25 +66,11 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   const selectedClientId = watch('clientId');
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [clientsResponse, vehiclesResponse, usersResponse] = await Promise.all([
-          api.clients.getAll({ pageSize: 100 }),
-          api.vehicles.getAll({ pageSize: 100 }),
-          api.users.getAll({ pageSize: 100 }),
-        ]);
-
-        setClients(clientsResponse.data.data);
-        setVehicles(vehiclesResponse.data.data);
-        setMechanics(usersResponse.data.data.filter(user => user.role === 'mechanic'));
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    // Aquí deberías obtener los datos reales de clientes, vehículos y mecánicos si tienes endpoints, si no, dejar vacío
+    setClients([]);
+    setVehicles([]);
+    setMechanics([]);
+    setLoading(false);
   }, []);
 
   // Filter vehicles by selected client
@@ -126,13 +112,12 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       const orderData = {
         ...data,
         startDate: new Date(data.startDate).toISOString(),
-        totalCost: data.estimatedCost, // Initially same as estimated
+        totalCost: data.estimatedCost,
       };
-
       if (mode === 'create') {
-        await api.serviceOrders.create(orderData);
+        await postOrderDetails(orderData as any); // Ajusta el tipo según tu modelo
       } else if (mode === 'edit' && order) {
-        await api.serviceOrders.update(order.id, orderData);
+        await putOrderDetails(orderData as any, order.id);
       }
       onSuccess();
     } catch (error) {

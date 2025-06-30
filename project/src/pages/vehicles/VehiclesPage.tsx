@@ -12,6 +12,7 @@ import { useApi } from '../../hooks/useApi';
 import { usePagination } from '../../hooks/usePagination';
 import { VehicleForm } from './VehicleForm';
 import { format } from 'date-fns';
+import { getVehicle } from '../../APIS/VehicleApis';
 
 export const VehiclesPage: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -21,37 +22,38 @@ export const VehiclesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState<string>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const location = useLocation();
   const pagination = usePagination({ initialPageSize: 20 });
-  const { data, loading, error, execute } = useApi(api.vehicles.getAll);
 
-  // Check if we should open modal from navigation state
+  // Modal desde navegación
   useEffect(() => {
     if (location.state?.openModal && location.state?.mode) {
       setModalMode(location.state.mode);
       setIsModalOpen(true);
-      // Clear the state to prevent reopening on refresh
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
+  // Obtener vehículos reales
   const fetchVehicles = useCallback(async () => {
-    const params = {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      search: searchTerm,
-      sortBy: sortKey,
-      sortOrder: sortDirection,
-    };
-    
+    setLoading(true);
+    setError(null);
     try {
-      const response = await execute(params);
-      setVehicles(response.data);
-    } catch (error) {
-      console.error('Failed to fetch vehicles:', error);
+      const data = await getVehicle();
+      if (data) {
+        setVehicles(data as any); // Ajustar el tipo si es necesario
+      } else {
+        setVehicles([]);
+      }
+    } catch (err) {
+      setError('Error al cargar vehículos');
+    } finally {
+      setLoading(false);
     }
-  }, [execute, pagination.page, pagination.pageSize, searchTerm, sortKey, sortDirection]);
+  }, []);
 
   useEffect(() => {
     fetchVehicles();
@@ -206,12 +208,12 @@ export const VehiclesPage: React.FC = () => {
           loading={loading}
           error={error}
           pagination={
-            data
+            vehicles.length > 0
               ? {
                   page: pagination.page,
                   pageSize: pagination.pageSize,
-                  total: data.total,
-                  totalPages: data.totalPages,
+                  total: vehicles.length,
+                  totalPages: Math.ceil(vehicles.length / pagination.pageSize),
                   onPageChange: pagination.setPage,
                   onPageSizeChange: pagination.setPageSize,
                 }

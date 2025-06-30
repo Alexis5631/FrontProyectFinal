@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Button } from '../../components/common/Button';
 import { Invoice, ServiceOrder, Client } from '../../types';
-import { api } from '../../services/api';
+import { getInvoice, postInvoice, putInvoice } from '../../APIS/InvoiceApis';
 
 const schema = yup.object().shape({
   orderId: yup.string().required('Service order is required'),
@@ -66,21 +66,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const taxAmount = watch('taxAmount');
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await api.serviceOrders.getAll({ 
-          status: 'completed',
-          pageSize: 100 
-        });
-        setOrders(response.data.data);
-      } catch (error) {
-        console.error('Failed to fetch orders:', error);
-      } finally {
-        setLoadingOrders(false);
-      }
-    };
-
-    fetchOrders();
+    setOrders([]);
+    setLoadingOrders(false);
   }, []);
 
   useEffect(() => {
@@ -96,19 +83,16 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         status: invoice.status,
       });
     } else {
-      // Generate invoice number for new invoices
       const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
       setValue('invoiceNumber', invoiceNumber);
       setValue('issueDate', new Date().toISOString().split('T')[0]);
       
-      // Set due date to 30 days from now
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 30);
       setValue('dueDate', dueDate.toISOString().split('T')[0]);
     }
   }, [invoice, reset, setValue]);
 
-  // Auto-calculate total when subtotal or tax changes
   useEffect(() => {
     if (subtotal !== undefined && taxAmount !== undefined) {
       setValue('totalAmount', subtotal + taxAmount);
@@ -119,15 +103,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     try {
       const invoiceData = {
         ...data,
-        clientId: orders.find(o => o.id === data.orderId)?.clientId || '',
         issueDate: new Date(data.issueDate).toISOString(),
         dueDate: new Date(data.dueDate).toISOString(),
       };
-
       if (mode === 'create') {
-        await api.invoices.create(invoiceData);
+        await postInvoice(invoiceData as any);
       } else if (mode === 'edit' && invoice) {
-        await api.invoices.update(invoice.id, invoiceData);
+        await putInvoice(invoiceData as any, invoice.id);
       }
       onSuccess();
     } catch (error) {

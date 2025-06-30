@@ -9,10 +9,10 @@ import { Modal } from '../../components/common/Modal';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Invoice } from '../../types';
 import { api } from '../../services/api';
-import { useApi } from '../../hooks/useApi';
 import { usePagination } from '../../hooks/usePagination';
 import { InvoiceForm } from './InvoiceForm';
 import { format } from 'date-fns';
+import { getInvoice } from '../../APIS/InvoiceApis';
 
 export const InvoicesPage: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -23,10 +23,11 @@ export const InvoicesPage: React.FC = () => {
   const [sortKey, setSortKey] = useState<string>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const location = useLocation();
   const pagination = usePagination({ initialPageSize: 20 });
-  const { data, loading, error, execute } = useApi(api.invoices.getAll);
 
   // Check if we should open modal from navigation state
   useEffect(() => {
@@ -38,23 +39,23 @@ export const InvoicesPage: React.FC = () => {
     }
   }, [location.state]);
 
+  // Obtener facturas reales
   const fetchInvoices = useCallback(async () => {
-    const params = {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      search: searchTerm,
-      sortBy: sortKey,
-      sortOrder: sortDirection,
-      ...(statusFilter && { status: statusFilter }),
-    };
-    
+    setLoading(true);
+    setError(null);
     try {
-      const response = await execute(params);
-      setInvoices(response.data);
-    } catch (error) {
-      console.error('Failed to fetch invoices:', error);
+      const data = await getInvoice();
+      if (data) {
+        setInvoices(data);
+      } else {
+        setInvoices([]);
+      }
+    } catch (err) {
+      setError('Error al cargar facturas');
+    } finally {
+      setLoading(false);
     }
-  }, [execute, pagination.page, pagination.pageSize, searchTerm, sortKey, sortDirection, statusFilter]);
+  }, []);
 
   useEffect(() => {
     fetchInvoices();
@@ -370,12 +371,12 @@ export const InvoicesPage: React.FC = () => {
           loading={loading}
           error={error}
           pagination={
-            data
+            invoices.length > 0
               ? {
                   page: pagination.page,
                   pageSize: pagination.pageSize,
-                  total: data.total,
-                  totalPages: data.totalPages,
+                  total: invoices.length,
+                  totalPages: Math.ceil(invoices.length / pagination.pageSize),
                   onPageChange: pagination.setPage,
                   onPageSizeChange: pagination.setPageSize,
                 }
