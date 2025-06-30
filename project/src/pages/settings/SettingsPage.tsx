@@ -223,7 +223,7 @@ export const SettingsPage: React.FC = () => {
             </h1>
             <p className="text-neutral-600 mt-1">Gestiona las órdenes de trabajo del taller</p>
           </div>
-          <Button onClick={handleCreate} className="shadow-medium" disabled={isLoading}>
+          <Button onClick={handleCreate} className="shadow-medium bg-blue-600 hover:bg-blue-700 text-white" disabled={isLoading}>
             <Plus className="h-4 w-4 mr-2" />
             Nueva Orden
           </Button>
@@ -237,7 +237,7 @@ export const SettingsPage: React.FC = () => {
                   <p className="text-sm font-semibold text-neutral-600">Total Órdenes</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-1">{ordenes.length}</p>
                 </div>
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-neutral-500 to-neutral-600 shadow-medium">
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-400 to-blue-600 shadow-medium">
                   <Clock className="h-7 w-7 text-white" />
                 </div>
               </div>
@@ -250,8 +250,8 @@ export const SettingsPage: React.FC = () => {
                   <p className="text-sm font-semibold text-neutral-600">En Proceso</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-1">{getOrdenesEnProceso()}</p>
                 </div>
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-primary-500 to-primary-600 shadow-medium">
-                  <AlertTriangle className="h-7 w-7 text-white" />
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-medium">
+                  <Clock className="h-7 w-7 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -263,8 +263,8 @@ export const SettingsPage: React.FC = () => {
                   <p className="text-sm font-semibold text-neutral-600">Completadas</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-1">{getOrdenesCompletadas()}</p>
                 </div>
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-success-500 to-success-600 shadow-medium">
-                  <CheckCircle className="h-7 w-7 text-white" />
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-600 shadow-medium">
+                  <Clock className="h-7 w-7 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -276,7 +276,7 @@ export const SettingsPage: React.FC = () => {
                   <p className="text-sm font-semibold text-neutral-600">Pendientes</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-1">{getOrdenesPendientes()}</p>
                 </div>
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-warning-500 to-warning-600 shadow-medium">
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-black to-neutral-800 shadow-medium">
                   <Clock className="h-7 w-7 text-white" />
                 </div>
               </div>
@@ -383,10 +383,10 @@ export const SettingsPage: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end space-x-2">
-                              <Button variant="ghost" size="sm" className="hover:bg-accent-50 hover:text-accent-600" onClick={() => handleEdit(orden)}>
+                              <Button variant="ghost" size="sm" className="hover:bg-blue-50 hover:text-blue-600" onClick={() => handleEdit(orden)}>
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="sm" onClick={() => handleDelete(orden.id)} className="hover:bg-red-50 hover:text-red-600">
+                              <Button variant="ghost" size="sm" onClick={() => handleDelete(orden.id)} className="hover:bg-blue-100 hover:text-red-600">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
@@ -507,10 +507,10 @@ export const SettingsPage: React.FC = () => {
               </div>
               
               <div className="flex justify-end space-x-4 mt-6 pt-6 border-t border-gray-200">
-                <Button variant="outline" onClick={() => setShowModal(false)} disabled={isLoading}>
+                <Button variant="outline" onClick={() => setShowModal(false)} disabled={isLoading} className="border-blue-500 text-blue-600 hover:bg-blue-50">
                   Cancelar
                 </Button>
-                <Button onClick={handleSubmit} disabled={isLoading}>
+                <Button onClick={handleSubmit} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
                   {isLoading ? 'Guardando...' : (selectedOrden ? 'Actualizar' : 'Crear')}
                 </Button>
               </div>

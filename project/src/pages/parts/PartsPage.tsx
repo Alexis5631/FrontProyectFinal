@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
-import { Plus, Search, Edit, Trash2, AlertTriangle, Package, TrendingDown, TrendingUp } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, AlertTriangle, Package, TrendingDown, TrendingUp, DollarSign, RefreshCw } from 'lucide-react';
 import { Replacement } from '../../types';
 import { getReplacement, posReplacement, putReplacement, deleteReplacement } from '../../APIS/ReplacementApis';
 import { Layout } from '../../components/layout/Layout';
@@ -193,7 +193,7 @@ export const PartsPage: React.FC = () => {
             </h1>
             <p className="text-neutral-600 mt-1">Controla el stock de repuestos y materiales</p>
           </div>
-          <Button onClick={handleCreate} className="shadow-medium" disabled={isLoading}>
+          <Button onClick={handleCreate} className="shadow-medium bg-blue-600 hover:bg-blue-700 text-white" disabled={isLoading}>
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Repuesto
           </Button>
@@ -204,7 +204,7 @@ export const PartsPage: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-neutral-600">Total Items</p>
+                  <p className="text-sm font-semibold text-neutral-600 flex items-center gap-2"><Package className="h-5 w-5 text-blue-600" /> Total Items</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-1">{stats.totalItems}</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-primary-500 to-primary-600 shadow-medium">
@@ -217,7 +217,7 @@ export const PartsPage: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-neutral-600">Stock Bajo</p>
+                  <p className="text-sm font-semibold text-neutral-600 flex items-center gap-2"><TrendingDown className="h-5 w-5 text-red-500" /> Stock Bajo</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-1">{stats.stockBajo}</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-danger-500 to-danger-600 shadow-medium">
@@ -230,7 +230,7 @@ export const PartsPage: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-neutral-600">Valor Total</p>
+                  <p className="text-sm font-semibold text-neutral-600 flex items-center gap-2"><DollarSign className="h-5 w-5 text-green-600" /> Valor Total</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-1">${(stats.valorTotal / 1000000).toFixed(1)}M</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-success-500 to-success-600 shadow-medium">
@@ -243,7 +243,7 @@ export const PartsPage: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-neutral-600">Alta Rotación</p>
+                  <p className="text-sm font-semibold text-neutral-600 flex items-center gap-2"><RefreshCw className="h-5 w-5 text-yellow-500" /> Alta Rotación</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-1">{stats.rotacionAlta}</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-secondary-500 to-secondary-600 shadow-medium">
@@ -319,7 +319,7 @@ export const PartsPage: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center shadow-medium">
-                              <Package className="h-6 w-6 text-white" />
+                              <Package className="h-6 w-6 text-blue-600" />
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-bold text-neutral-900">{replacement.description}</div>
@@ -348,10 +348,10 @@ export const PartsPage: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(replacement)} className="hover:bg-primary-50 hover:text-primary-600" disabled={isLoading}>
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(replacement)} className="hover:bg-blue-50 hover:text-blue-600" disabled={isLoading}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="hover:bg-danger-50 hover:text-danger-600" onClick={() => handleDelete(replacement.id)} disabled={isLoading}>
+                            <Button variant="ghost" size="sm" className="hover:bg-blue-100 hover:text-red-600" onClick={() => handleDelete(replacement.id)} disabled={isLoading}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -417,10 +417,10 @@ export const PartsPage: React.FC = () => {
                 />
               </div>
               <div className="flex justify-end space-x-3 mt-8">
-                <Button variant="outline" onClick={() => setShowModal(false)} disabled={isLoading}>
+                <Button variant="outline" onClick={() => setShowModal(false)} disabled={isLoading} className="border-blue-500 text-blue-600 hover:bg-blue-50">
                   Cancelar
                 </Button>
-                <Button onClick={handleSubmit} disabled={isLoading}>
+                <Button onClick={handleSubmit} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
                   {isLoading ? 'Guardando...' : (selectedReplacement ? 'Actualizar' : 'Crear')}
                 </Button>
               </div>
