@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
-import { Plus, Search, Edit, Eye, Clock, CheckCircle } from 'lucide-react';
+import { Plus, Search, Edit, Eye, Clock, CheckCircle, Trash2} from 'lucide-react';
 import { ServiceOrder, Replacement, OrderDetails, State, Client, Vehicle } from '../../types';
 import { getOrderDetails, putOrderDetails, deleteOrderDetails } from '../../APIS/OrderDetailsApis';
 import { getServiceOrder, generateServiceOrder } from '../../APIS/ServiceOrderApis';
@@ -12,6 +12,7 @@ import { getReplacement } from '../../APIS/ReplacementApis';
 import { getState } from '../../APIS/StateApis';
 import { getVehicle } from '../../APIS/VehicleApis';
 import { getClient } from '../../APIS/ClientApis';
+import { Layout } from '../../components/layout/Layout';
 
 export function DetallesOrden() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -24,6 +25,8 @@ export function DetallesOrden() {
     const [estados, setStates] = useState<State[]>([]);
     const [clientes, setClientes] = useState<Client[]>([]);
     const [vehiculos, setVehiculos] = useState<Vehicle[]>([]);
+
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         getClient().then((data) => {
@@ -187,6 +190,11 @@ export function DetallesOrden() {
         }).length;
     };
 
+    const getReplacementName = (idReplacement: number): string => {
+        const repuesto = repuestos.find(r => r.id === idReplacement);
+        return repuesto ? `${repuesto.description}` : 'N/A'; 
+    }
+
     const handleDelete = async (id: number | string) => {
         const result = await Swal.fire({
             title: '¿Esta seguro de eliminar el detaller de orden?',
@@ -283,7 +291,7 @@ export function DetallesOrden() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-semibold text-neutral-600">Total Detalles de Orden</p>
-                                    <p className="text-3xl font-bold text-neutral-900 mt-1">{orderDetails.length}</p>
+                                    <p className="text-3xl font-bold text-neutral-900 mt-1">{detalles.length}</p>
                                 </div>
                                 <div className="p-4 rounded-2xl bg-gradient-to-r from-black to-neutral-800 shadow-medium">
                                     <Clock className="h-7 w-7 text-white" />
@@ -296,35 +304,9 @@ export function DetallesOrden() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-semibold text-neutral-600">Total Órdenes</p>
-                                    <p className="text-3xl font-bold text-neutral-900 mt-1">{serviceOrders.length}</p>
+                                    <p className="text-3xl font-bold text-neutral-900 mt-1">{detalles.length}</p>
                                 </div>
                                 <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-400 to-blue-600 shadow-medium">
-                                    <Clock className="h-7 w-7 text-white" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-semibold text-neutral-600">Órdenes Completadas</p>
-                                    <p className="text-3xl font-bold text-neutral-900 mt-1">{getServiceOrdersCompleted()}</p>
-                                </div>
-                                <div className="p-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-600 shadow-medium">
-                                    <Clock className="h-7 w-7 text-white" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-semibold text-neutral-600">Órdenes Pendientes</p>
-                                    <p className="text-3xl font-bold text-neutral-900 mt-1">{getServiceOrdersPending()}</p>
-                                </div>
-                                <div className="p-4 rounded-2xl bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-medium">
                                     <Clock className="h-7 w-7 text-white" />
                                 </div>
                             </div>
@@ -384,7 +366,7 @@ export function DetallesOrden() {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-neutral-200">
-                                        {filteredOrderDetails.map((detail) => {
+                                        {filteredDetalles.map((detail) => {
                                             return (
                                                 <tr key={detail.id} className="hover:bg-gradient-to-r hover:from-neutral-50 hover:to-neutral-100 transition-all duration-200">
                                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -436,176 +418,12 @@ export function DetallesOrden() {
                         )}
                     </CardContent>
                 </Card>
-        <div className="p-6">
-            <div className="flex items-center justify-between">
-            <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-neutral-900 to-neutral-700 bg-clip-text text-transparent">
-                Gestión de Detalles de Orden
-                </h1>
-                <p className="text-neutral-600 mt-1">Administra la información de las ordenes de servicio</p>
-            </div>
-            <Button onClick={handleCreate} className="shadow-medium">
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo Detalle de Orden
-            </Button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card>
-                <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                    <p className="text-sm font-semibold text-neutral-600">Total Detalles de Orden</p>
-                    <p className="text-3xl font-bold text-neutral-900 mt-1">{detalles.length}</p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-gradient-to-r from-neutral-500 to-neutral-600 shadow-medium">
-                    <Clock className="h-7 w-7 text-white" />
-                    </div>
-                </div>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                    <p className="text-sm font-semibold text-neutral-600">Total Órdenes</p>
-                    <p className="text-3xl font-bold text-neutral-900 mt-1">{ordenes.length}</p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-gradient-to-r from-neutral-500 to-neutral-600 shadow-medium">
-                    <Clock className="h-7 w-7 text-white" />
-                    </div>
-                </div>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                    <p className="text-sm font-semibold text-neutral-600">Ordenes Completadas</p>
-                    <p className="text-3xl font-bold text-neutral-900 mt-1">{getOrdenesCompletadas()}</p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-gradient-to-r from-success-500 to-success-600 shadow-medium">
-                    <CheckCircle className="h-7 w-7 text-white" />
-                    </div>
-                </div>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                    <p className="text-sm font-semibold text-neutral-600">Ordenes Pendientes</p>
-                    <p className="text-3xl font-bold text-neutral-900 mt-1">{getOrdenesPendientes()}</p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-gradient-to-r from-warning-500 to-warning-600 shadow-medium">
-                    <Clock className="h-7 w-7 text-white" />
-                    </div>
-                </div>
-                </CardContent>
-            </Card>
-        </div>
-        <Card>
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center">
-                    <div className="w-2 h-2 bg-primary-500 rounded-full mr-3"></div>
-                    Lista de Detalles de Orden
-                </CardTitle>
-                <div className="flex space-x-4">
-                    <div className="relative max-w-md">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
-                    <Input
-                        placeholder="Buscar detalles de orden..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                    />
-                    </div>
-                </div>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-neutral-200">
-                        <thead className="bg-gradient-to-r from-neutral-50 to-neutral-100">
-                        <tr>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                            Detalle de Orden
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                            Cliente / Vehículo
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                            Repuesto
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                            Cantidad
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                            Precio Total
-                        </th>
-                        <th className="px-6 py-4 text-right text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                            Acciones
-                        </th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-neutral-200">
-                        {filteredDetalles.map((detalle) => {
-                            return (
-                            <tr key={detalle.id} className="hover:bg-gradient-to-r hover:from-neutral-50 hover:to-neutral-100 transition-all duration-200">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                <div>
-                                    <div className="text-sm font-bold text-neutral-900">{detalle.id}</div>
-                                </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                <div>
-                                    <div className="text-sm font-semibold text-neutral-900">
-                                    {getClientFromOrderDetail(detalle)?.name || 'N/A'} {getClientFromOrderDetail(detalle)?.lastName || ''}
-                                    </div>
-                                    <div className="text-sm text-neutral-500">
-                                    {getVehicleFromOrderDetail(detalle)?.brand || ''} • {getVehicleFromOrderDetail(detalle)?.serialNumberVIN || ''}
-                                    </div>
-                                </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-neutral-200 text-neutral-700">
-                                    {getSparePartName(detalle.idReplacement)}
-                                </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-bold text-neutral-900">
-                                    {detalle.quantity}
-                                </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-bold text-neutral-900">
-                                    {detalle.totalCost}
-                                </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div className="flex items-center justify-end space-x-2">
-                                    <Button variant="ghost" size="sm" className="hover:bg-accent-50 hover:text-accent-600" onClick={() => handleEdit(detalle)}>
-                                    <Eye className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="sm" onClick={() => handleDelete(detalle.id)} className="hover:bg-primary-50 hover:text-primary-600">
-                                    <Edit className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                </td>
-                            </tr>
-                            );
-                        })}
-                        </tbody>
-                    </table>
-                </div>
-            </CardContent>
-        </Card>
 
                 {showModal && (
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
                         <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-strong border border-neutral-200">
                             <h2 className="text-xl font-bold text-neutral-900 mb-6">
-                                {selectedOrderDetail ? 'Editar Detalle' : 'Nuevo Detalle'}
+                                {selectedDetalles ? 'Editar Detalle' : 'Nuevo Detalle'}
                             </h2>
                             <div className="space-y-4">
                                 <Select 
@@ -619,7 +437,7 @@ export function DetallesOrden() {
                                     className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
                                 >
                                     <option value="">Seleccionar Orden de Servicio</option>
-                                    {serviceOrders.map(order => (
+                                    {ordenes.map(order => (
                                         <option key={order.id} value={order.id}>
                                             {order.id} - {order.entryDate}
                                         </option>
@@ -636,7 +454,7 @@ export function DetallesOrden() {
                                     className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
                                 >
                                     <option value="">Seleccionar repuesto</option>
-                                    {replacements.map(replacement => (
+                                    {repuestos.map(replacement => (
                                         <option key={replacement.id} value={replacement.id}>
                                             {replacement.description} - ${replacement.unitPrice}
                                         </option>
@@ -656,7 +474,7 @@ export function DetallesOrden() {
                                     Cancelar
                                 </Button>
                                 <Button onClick={handleSubmit} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                                    {isLoading ? 'Guardando...' : (selectedOrderDetail ? 'Actualizar' : 'Crear')}
+                                    {isLoading ? 'Guardando...' : (selectedDetalles ? 'Actualizar' : 'Crear')}
                                 </Button>
                             </div>
                         </div>
@@ -664,50 +482,5 @@ export function DetallesOrden() {
                 )}
             </div>
         </Layout>
-        {showModal && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-strong border border-neutral-200">
-                <h2 className="text-xl font-bold text-neutral-900 mb-6">
-                    {selectedDetalles ? 'Editar Detalle' : 'Nuevo Detalle'}
-                </h2>
-                <div className="space-y-4">
-                    <Select label="Orden de Servicio" name="idOrder" value={formValues.idOrder || ''} onChange={e => setFormValues(prev => ({
-                            ...prev,
-                            idOrder: Number(e.target.value)
-                        }))}
-                        className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
-                        <option value="">Seleccionar Orden de Servicio</option>
-                        {ordenes.map(r => (
-                        <option key={r.id} value={r.id}>
-                            {r.id} {r.entryDate}
-                        </option>
-                        ))}
-                    </Select>
-                    <Input label="Piezas Requeridas" type="number" name="quantity" value={formValues.quantity || ''} onChange={handleInputChange}/>
-                    <Select label="Repuesto" name="idReplacement" value={formValues.idReplacement || ''} onChange={e => setFormValues(prev => ({
-                            ...prev,
-                            idReplacement: Number(e.target.value)
-                        }))}
-                        className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
-                        <option value="">Seleccionar repuesto</option>
-                        {repuestos.map(r => (
-                        <option key={r.id} value={r.id}>
-                            {r.description}
-                        </option>
-                        ))}
-                    </Select>
-                </div>
-                <div className="flex justify-end space-x-3 mt-8">
-                    <Button variant="outline" onClick={() => setShowModal(false)}>
-                    Cancelar
-                    </Button>
-                    <Button onClick={handleSubmit}>
-                    {selectedDetalles ? 'Actualizar' : 'Crear'}
-                    </Button>
-                </div>
-                </div>
-            </div>
-            )}
-        </div>
     );
 }
