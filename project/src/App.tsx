@@ -8,9 +8,9 @@ import { ClientsPage } from './pages/clients/ClientsPage';
 import { VehiclesPage } from './pages/vehicles/VehiclesPage';
 import { OrdersPage } from './pages/orders/OrdersPage';
 import { PartsPage } from './pages/parts/PartsPage';
-import { InvoicesPage } from './pages/invoices/InvoicesPage';
 import { AuditLogsPage } from './pages/audit/AuditLogsPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
+import { Facturacion } from './pages/invoices/InvoicesPage';
 
 function App() {
   return (
@@ -62,7 +62,7 @@ function App() {
             path="/invoices"
             element={
               <ProtectedRoute roles={['admin', 'receptionist']}>
-                <InvoicesPage />
+                <Facturacion />
               </ProtectedRoute>
             }
           />

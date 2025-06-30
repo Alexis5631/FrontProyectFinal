@@ -6,7 +6,7 @@ import { Select } from '../../components/ui/Select';
 import { Plus, Search, Edit, Eye, Clock, CheckCircle, Trash2 } from 'lucide-react';
 import { ServiceOrder, Replacement, OrderDetails, State, Client, Vehicle } from '../../types';
 import { getOrderDetails, putOrderDetails, deleteOrderDetails } from '../../APIS/OrderDetailsApis';
-import { getServiceOrder } from '../../APIS/ServiceOrderApis';
+import { getServiceOrder, generateServiceOrder } from '../../APIS/ServiceOrderApis';
 import { getReplacement } from '../../APIS/ReplacementApis';
 import { getState } from '../../APIS/StateApis';
 import { getVehicle } from '../../APIS/VehicleApis';
@@ -109,9 +109,27 @@ export const OrdersPage: React.FC = () => {
                 // Edit
                 response = await putOrderDetails(formValues as OrderDetails, selectedOrderDetail.id);
             } else {
-                // Create - Aquí necesitarías implementar la función de creación
-                alert('Función de creación no implementada. Por favor, implementa postOrderDetails.');
-                return;
+                // Create - Usar generateServiceOrder
+                const serviceOrderData: ServiceOrder = {
+                    id: 0, // Será removido por la función
+                    idVehicle: 0,
+                    idUser: 0,
+                    idServiceType: 0,
+                    idState: 0,
+                    entryDate: '',
+                    exitDate: '',
+                    clientMessage: '',
+                    // Incluir los datos del detalle de orden
+                    orderDetails: [{
+                        id: 0,
+                        idOrder: formValues.idOrder!,
+                        idReplacement: formValues.idReplacement!,
+                        quantity: formValues.quantity!,
+                        totalCost: 0 // Se calculará en el backend
+                    }]
+                };
+                
+                response = await generateServiceOrder(formValues.idOrder!, serviceOrderData);
             }
             
             // Verificar si hay respuesta y si es un error HTTP
