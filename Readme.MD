@@ -1,4 +1,4 @@
-# Fronet_ASP.NET
+# Front_ASP.NET
 
 Este proyecto es una aplicación web desarrollada con React (TypeScript) para la gestión integral de un taller automotriz. El frontend consume una API ASP.NET para realizar operaciones CRUD sobre diferentes entidades como vehículos, clientes, órdenes de servicio, repuestos, facturación, auditoría y más.
 
@@ -32,3 +32,13 @@ El objetivo principal es facilitar la administración de un taller mecánico, pe
 ---
 
 Este proyecto es ideal para talleres automotrices que buscan digitalizar y optimizar su gestión diaria de manera sencilla y eficiente. 
+
+## Configuración
+```
+git clone https://github.com/Alexis5631/FrontProyectFinal.git
+
+cd FrontProyectFinal
+cd proyect
+npm install
+npm run dev
+```
