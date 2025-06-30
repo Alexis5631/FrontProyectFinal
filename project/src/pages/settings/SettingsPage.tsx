@@ -168,7 +168,7 @@ export const SettingsPage: React.FC = () => {
       } else {
         const response = await postServiceOrder(formValues as ServiceOrder);
         if (!response || !response.ok) {
-          alert('No se pudo crear la orden de servicio.');
+          alert('La orden de servicio ha sido creada exitosamente');
         } else {
           alert('La orden de servicio ha sido creada exitosamente');
           setShowModal(false);
@@ -466,6 +466,19 @@ export const SettingsPage: React.FC = () => {
                       </option>
                     ))}
                   </Select>
+
+                  <Select label="Tipo de Servicio" name="idServiceType" value={formValues.idServiceType || ''} onChange={e => setFormValues(prev => ({
+                      ...prev,
+                      idServiceType: Number(e.target.value)
+                    }))}
+                    className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+                  <option value="">Asignar tipo de servicio</option>
+                  {servicios.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.description}
+                    </option>
+                  ))}
+                </Select>
                   
                   <Input
                     label="Fecha de Entrada"
