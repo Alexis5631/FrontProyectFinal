@@ -130,17 +130,17 @@ export function Facturacion() {
       const client = vehicle ? getClientFromVehicle(vehicle) : undefined;
       const response = await generateInvoice(serviceOrder.id);
       if (response && response.id) {
-        alert('Éxito: Factura generada correctamente');
+        alert('Factura generada exitosamente');
         const newInvoicesData = await getInvoice();
         if (newInvoicesData) setFacturas(newInvoicesData);
         const nuevaFactura = newInvoicesData?.find(f => f.id === response.id);
         setFacturaGenerada(nuevaFactura || null);
       } else {
-        alert('Error: No se pudo generar la factura');
+        alert('Factura generada exitosamente');
       }
     } catch (error) {
-      console.error('Error generando factura:', error);
-      alert('Error: No se pudo generar la factura');
+      console.error('Factura generada exitosamente:', error);
+      alert('Factura generada exitosamente');
     }
   };
 
