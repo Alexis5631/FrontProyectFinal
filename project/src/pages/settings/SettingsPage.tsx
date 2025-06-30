@@ -1,1239 +1,523 @@
-import React, { useState } from 'react';
-import { Save, User, Building, Bell, Shield, Database, Palette, Globe, Download, Upload, Key, RefreshCw, Check, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { AlertCircle, Plus, Search, Edit, Eye, Clock, CheckCircle, AlertTriangle, XCircle, CreditCardIcon, FileText, Key, Bell, RefreshCw, Download, Upload, Trash2 } from 'lucide-react';
+import { ServiceOrder, Client, Vehicle, User, Replacement, State, ServiceType} from '../../types';
+import { getServiceOrder, postServiceOrder, putServiceOrder, deleteServiceOrder } from '../../APIS/ServiceOrderApis';
+import { getVehicle } from '../../APIS/VehicleApis';
+import { getClient } from '../../APIS/ClientApis';
+import { getState } from '../../APIS/StateApis';
+import { getUser } from '../../APIS/UserApis';
+import { get } from 'react-hook-form';
+import { getServiceType } from '../../APIS/ServiceTypeApis';
 import { Layout } from '../../components/layout/Layout';
-import { Button } from '../../components/common/Button';
-import { Modal } from '../../components/common/Modal';
-import { useAuth } from '../../context/AuthContext';
-
-interface SettingsSection {
-  id: string;
-  name: string;
-  icon: React.ElementType;
-  description: string;
-}
-
-const settingsSections: SettingsSection[] = [
-  {
-    id: 'profile',
-    name: 'Profile Settings',
-    icon: User,
-    description: 'Manage your personal information and preferences',
-  },
-  {
-    id: 'company',
-    name: 'Company Settings',
-    icon: Building,
-    description: 'Configure workshop information and business details',
-  },
-  {
-    id: 'notifications',
-    name: 'Notifications',
-    icon: Bell,
-    description: 'Control email and system notifications',
-  },
-  {
-    id: 'security',
-    name: 'Security',
-    icon: Shield,
-    description: 'Password, two-factor authentication, and security logs',
-  },
-  {
-    id: 'system',
-    name: 'System Settings',
-    icon: Database,
-    description: 'Database, backups, and system configuration',
-  },
-  {
-    id: 'appearance',
-    name: 'Appearance',
-    icon: Palette,
-    description: 'Theme, colors, and interface customization',
-  },
-  {
-    id: 'localization',
-    name: 'Localization',
-    icon: Globe,
-    description: 'Language, timezone, and regional settings',
-  },
-];
 
 export const SettingsPage: React.FC = () => {
-  const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState('profile');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalContent, setModalContent] = useState<{ title: string; content: React.ReactNode }>({ title: '', content: null });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [selectedOrden, setSelectedOrden] = useState<ServiceOrder | null>(null);
+  const [ordenes, setOrdenes] = useState<ServiceOrder[]>([]);
+  const [formValues, setFormValues] = useState<Partial<ServiceOrder>>({});
+  const [vehiculos, setVehiculos] = useState<Vehicle[]>([]);
+  const [usuarios, setUsuarios] = useState<User[]>([]);
+  const [estados, setStates] = useState<State[]>([]);
+  const [servicios, setType] = useState<ServiceType[]>([]);
+  const [filterEstado, setFilterEstado] = useState('');
+  const [clientes, setClientes] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [lastBackup, setLastBackup] = useState(new Date(Date.now() - 1000 * 60 * 60 * 6)); // 6 hours ago
-  const [settings, setSettings] = useState({
-    // Profile Settings
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: '',
-    
-    // Company Settings
-    companyName: 'AutoTaller Workshop',
-    companyAddress: '123 Main Street, City, State 12345',
-    companyPhone: '+1-555-0100',
-    companyEmail: 'info@autotaller.com',
-    taxId: '12-3456789',
-    
-    // Notification Settings
-    emailNotifications: true,
-    smsNotifications: false,
-    orderUpdates: true,
-    lowStockAlerts: true,
-    invoiceReminders: true,
-    
-    // Security Settings
-    twoFactorEnabled: false,
-    sessionTimeout: 30,
-    passwordExpiry: 90,
-    
-    // System Settings
-    autoBackup: true,
-    backupFrequency: 'daily',
-    dataRetention: 365,
-    
-    // Appearance Settings
-    theme: 'light',
-    primaryColor: 'blue',
-    compactMode: false,
-    
-    // Localization Settings
-    language: 'en',
-    timezone: 'America/New_York',
-    dateFormat: 'MM/dd/yyyy',
-    currency: 'USD',
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [ordenesData, vehiculosData, usuariosData, estadosData, serviciosData, clientesData] = await Promise.all([
+        getServiceOrder(),
+        getVehicle(),
+        getUser(),
+        getState(),
+        getServiceType(),
+        getClient()
+      ]);
+
+      if (ordenesData) setOrdenes(ordenesData);
+      if (vehiculosData) setVehiculos(vehiculosData);
+      if (usuariosData) setUsuarios(usuariosData);
+      if (estadosData) setStates(estadosData);
+      if (serviciosData) setType(serviciosData);
+      if (clientesData) setClientes(clientesData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      alert('Error al cargar los datos. Por favor, inténtalo de nuevo.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Función para obtener el nombre del estado a partir del state_id
+  const getStateName = (state_id: number) => {
+    const estado = estados.find(e => e.id === state_id);
+    return estado ? `${estado.stateType}` : 'Sin estado';
+  };
+
+  // Obtener el id del estado seleccionado a partir del nombre
+  const selectedState = estados.find(e => e.stateType.toLowerCase() === filterEstado);
+
+  const filteredOrdenes = ordenes.filter(orden => {
+    if (filterEstado === '') return (
+      searchTerm === '' ||
+      orden.vehicle?.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      orden.vehicle?.brand?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const estado = estados.find(e => e.id === orden.idState);
+    return (
+      estado && estado.stateType.toLowerCase() === filterEstado &&
+      (
+        searchTerm === '' ||
+        orden.vehicle?.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orden.vehicle?.brand?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
   });
 
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  const handleEdit = (orden: ServiceOrder) => {
+    setSelectedOrden(orden);
+    setFormValues(orden);
+    setShowModal(true);
   };
 
-  const handleSave = async () => {
-    setIsLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Saving settings:', settings);
-      
-      // Show success message
-      setModalContent({
-        title: 'Settings Saved',
-        content: (
-          <div className="text-center py-4">
-            <Check className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900 mb-2">Settings saved successfully!</p>
-            <p className="text-gray-600">Your changes have been applied and will take effect immediately.</p>
-          </div>
-        )
-      });
-      setIsModalOpen(true);
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      setModalContent({
-        title: 'Error',
-        content: (
-          <div className="text-center py-4">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900 mb-2">Failed to save settings</p>
-            <p className="text-gray-600">Please try again or contact support if the problem persists.</p>
-          </div>
-        )
-      });
-      setIsModalOpen(true);
-    } finally {
-      setIsLoading(false);
+  const handleCreate = () => {
+    setSelectedOrden(null);
+    setFormValues({});
+    setShowModal(true);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setFormValues(prev => ({ ...prev, [name]: value }));
+    };
+
+  // Función para obtener el cliente a partir del vehículo
+  const getClientFromOrder = (orden: ServiceOrder): Client | undefined => {
+    const vehicle = vehiculos.find(v => v.id === orden.idVehicle);
+    if (!vehicle) return undefined;
+    return clientes.find(c => c.id === vehicle.idClient);
+  };
+
+  // Función para obtener el vehículo a partir de la orden
+  const getVehicleFromOrder = (orden: ServiceOrder): Vehicle | undefined => {
+    return vehiculos.find(v => v.id === orden.idVehicle);
+  };
+
+  // Funciones para calcular estadísticas
+  const getOrdenesByState = (stateName: string) => {
+    return ordenes.filter(orden => {
+      const estado = estados.find(e => e.id === orden.idState);
+      return estado && estado.stateType.toLowerCase() === stateName.toLowerCase();
+    }).length;
+  };
+
+  const getOrdenesEnProceso = () => {
+    return ordenes.filter(orden => {
+      const estado = estados.find(e => e.id === orden.idState);
+      return estado && (estado.stateType.toLowerCase().includes('proceso') || 
+                       estado.stateType.toLowerCase().includes('trabajando') ||
+                       estado.stateType.toLowerCase().includes('reparando'));
+    }).length;
+  };
+
+  const getOrdenesCompletadas = () => {
+    return ordenes.filter(orden => {
+      const estado = estados.find(e => e.id === orden.idState);
+      return estado && (estado.stateType.toLowerCase().includes('completada') || 
+                       estado.stateType.toLowerCase().includes('terminada') ||
+                       estado.stateType.toLowerCase().includes('finalizada'));
+    }).length;
+  };
+
+  const getOrdenesPendientes = () => {
+    return ordenes.filter(orden => {
+      const estado = estados.find(e => e.id === orden.idState);
+      return estado && (estado.stateType.toLowerCase().includes('pendiente') || 
+                       estado.stateType.toLowerCase().includes('espera') ||
+                       estado.stateType.toLowerCase().includes('nueva'));
+    }).length;
+  };
+
+  const handleSubmit = async () => {
+    if (!formValues.idVehicle) {
+      alert('Debes seleccionar un vehículo válido.');
+      return;
     }
-  };
 
-  const handleChangePassword = () => {
-    setModalContent({
-      title: 'Change Password',
-      content: (
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Current Password
-            </label>
-            <input
-              type="password"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter current password"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              New Password
-            </label>
-            <input
-              type="password"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter new password"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm New Password
-            </label>
-            <input
-              type="password"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Confirm new password"
-            />
-          </div>
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => {
-              setIsModalOpen(false);
-              setTimeout(() => {
-                setModalContent({
-                  title: 'Password Changed',
-                  content: (
-                    <div className="text-center py-4">
-                      <Check className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                      <p className="text-lg font-medium text-gray-900 mb-2">Password updated successfully!</p>
-                      <p className="text-gray-600">Your password has been changed. Please use your new password for future logins.</p>
-                    </div>
-                  )
-                });
-                setIsModalOpen(true);
-              }, 500);
-            }}>
-              <Key className="h-4 w-4 mr-2" />
-              Update Password
-            </Button>
-          </div>
-        </div>
-      )
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleManualBackup = async () => {
     setIsLoading(true);
     try {
-      // Simulate backup process
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      setLastBackup(new Date());
-      
-      setModalContent({
-        title: 'Backup Complete',
-        content: (
-          <div className="text-center py-4">
-            <Check className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900 mb-2">Backup created successfully!</p>
-            <p className="text-gray-600">Your data has been backed up to secure storage.</p>
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">
-                <strong>Backup ID:</strong> BKP-{Date.now().toString().slice(-8)}
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>Size:</strong> 2.4 MB
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>Created:</strong> {new Date().toLocaleString()}
-              </p>
-            </div>
-          </div>
-        )
-      });
-      setIsModalOpen(true);
-    } catch (error) {
-      setModalContent({
-        title: 'Backup Failed',
-        content: (
-          <div className="text-center py-4">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900 mb-2">Backup failed</p>
-            <p className="text-gray-600">Unable to create backup. Please try again later.</p>
-          </div>
-        )
-      });
-      setIsModalOpen(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDownloadLogs = async () => {
-    setIsLoading(true);
-    try {
-      // Simulate log generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Create a mock log file
-      const logContent = `
-AutoTaller System Logs - ${new Date().toISOString()}
-================================================
-
-[${new Date().toISOString()}] INFO: System startup completed
-[${new Date(Date.now() - 1000 * 60 * 30).toISOString()}] INFO: User login: admin@example.com
-[${new Date(Date.now() - 1000 * 60 * 60).toISOString()}] INFO: Backup completed successfully
-[${new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString()}] WARN: Low stock alert: Brake Pads
-[${new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString()}] INFO: Invoice generated: INV-001
-[${new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString()}] INFO: Service order completed: ORD-123
-
-End of logs
-      `;
-      
-      const blob = new Blob([logContent], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `autotaller-logs-${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      setModalContent({
-        title: 'Logs Downloaded',
-        content: (
-          <div className="text-center py-4">
-            <Download className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900 mb-2">System logs downloaded!</p>
-            <p className="text-gray-600">The log file has been saved to your downloads folder.</p>
-          </div>
-        )
-      });
-      setIsModalOpen(true);
-    } catch (error) {
-      setModalContent({
-        title: 'Download Failed',
-        content: (
-          <div className="text-center py-4">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900 mb-2">Download failed</p>
-            <p className="text-gray-600">Unable to download logs. Please try again later.</p>
-          </div>
-        )
-      });
-      setIsModalOpen(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRestoreBackup = () => {
-    setModalContent({
-      title: 'Restore from Backup',
-      content: (
-        <div className="space-y-4">
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-center">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
-              <p className="text-sm text-yellow-800">
-                <strong>Warning:</strong> Restoring from backup will overwrite all current data. This action cannot be undone.
-              </p>
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Backup File
-            </label>
-            <input
-              type="file"
-              accept=".bak,.sql,.zip"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-2">Available Backups:</h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-2 bg-white rounded border">
-                <div>
-                  <p className="text-sm font-medium">BKP-{Date.now().toString().slice(-8)}</p>
-                  <p className="text-xs text-gray-500">{lastBackup.toLocaleString()} • 2.4 MB</p>
-                </div>
-                <Button size="sm" variant="outline">Select</Button>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-white rounded border">
-                <div>
-                  <p className="text-sm font-medium">BKP-{(Date.now() - 86400000).toString().slice(-8)}</p>
-                  <p className="text-xs text-gray-500">{new Date(Date.now() - 86400000).toLocaleString()} • 2.3 MB</p>
-                </div>
-                <Button size="sm" variant="outline">Select</Button>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={() => {
-              setIsModalOpen(false);
-              setTimeout(() => {
-                setModalContent({
-                  title: 'Restore Complete',
-                  content: (
-                    <div className="text-center py-4">
-                      <Check className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                      <p className="text-lg font-medium text-gray-900 mb-2">Data restored successfully!</p>
-                      <p className="text-gray-600">Your system has been restored from the selected backup.</p>
-                    </div>
-                  )
-                });
-                setIsModalOpen(true);
-              }, 500);
-            }}>
-              <Upload className="h-4 w-4 mr-2" />
-              Restore Backup
-            </Button>
-          </div>
-        </div>
-      )
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleTestNotifications = async () => {
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setModalContent({
-        title: 'Test Notifications',
-        content: (
-          <div className="space-y-4">
-            <div className="text-center py-4">
-              <Bell className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-              <p className="text-lg font-medium text-gray-900 mb-2">Test notifications sent!</p>
-              <p className="text-gray-600">Check your email and phone for test messages.</p>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center">
-                  <Check className="h-5 w-5 text-green-600 mr-2" />
-                  <span className="text-sm text-green-800">Email notification sent</span>
-                </div>
-                <span className="text-xs text-green-600">✓ Delivered</span>
-              </div>
-              
-              {settings.smsNotifications && (
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <div className="flex items-center">
-                    <Check className="h-5 w-5 text-green-600 mr-2" />
-                    <span className="text-sm text-green-800">SMS notification sent</span>
-                  </div>
-                  <span className="text-xs text-green-600">✓ Delivered</span>
-                </div>
-              )}
-              
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center">
-                  <Bell className="h-5 w-5 text-blue-600 mr-2" />
-                  <span className="text-sm text-blue-800">In-app notification sent</span>
-                </div>
-                <span className="text-xs text-blue-600">✓ Delivered</span>
-              </div>
-            </div>
-          </div>
-        )
-      });
-      setIsModalOpen(true);
-    } catch (error) {
-      setModalContent({
-        title: 'Test Failed',
-        content: (
-          <div className="text-center py-4">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900 mb-2">Test notifications failed</p>
-            <p className="text-gray-600">Unable to send test notifications. Please check your settings.</p>
-          </div>
-        )
-      });
-      setIsModalOpen(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleExportSettings = async () => {
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const settingsExport = {
-        exportDate: new Date().toISOString(),
-        version: '1.0',
-        settings: settings,
-        metadata: {
-          user: user?.email,
-          system: 'AutoTaller Manager',
+      if (selectedOrden) {
+        const response = await putServiceOrder(formValues as ServiceOrder, selectedOrden.id);
+        if (!response || !response.ok) {
+          alert('No se pudo editar la orden de servicio.');
+        } else {
+          alert('La orden de servicio ha sido editada exitosamente');
+          setShowModal(false);
+          await loadData();
         }
-      };
-      
-      const blob = new Blob([JSON.stringify(settingsExport, null, 2)], { type: 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `autotaller-settings-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      setModalContent({
-        title: 'Settings Exported',
-        content: (
-          <div className="text-center py-4">
-            <Download className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900 mb-2">Settings exported successfully!</p>
-            <p className="text-gray-600">Your configuration has been saved to a file.</p>
-          </div>
-        )
-      });
-      setIsModalOpen(true);
+      } else {
+        const response = await postServiceOrder(formValues as ServiceOrder);
+        if (!response || !response.ok) {
+          alert('No se pudo crear la orden de servicio.');
+        } else {
+          alert('La orden de servicio ha sido creada exitosamente');
+          setShowModal(false);
+          await loadData();
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      alert('Error al procesar la orden. Por favor, inténtalo de nuevo.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleDelete = async (id: number | string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta orden de servicio?')) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await deleteServiceOrder(id);
+      if (!response || !response.ok) {
+        alert('No se pudo eliminar la orden de servicio.');
+      } else {
+        alert('La orden de servicio ha sido eliminada exitosamente');
+        await loadData();
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      alert('Error al eliminar la orden. Por favor, inténtalo de nuevo.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleImportSettings = () => {
-    setModalContent({
-      title: 'Import Settings',
-      content: (
-        <div className="space-y-4">
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center">
-              <Upload className="h-5 w-5 text-blue-600 mr-2" />
-              <p className="text-sm text-blue-800">
-                Import settings from a previously exported configuration file.
-              </p>
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Settings File
-            </label>
-            <input
-              type="file"
-              accept=".json"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => {
-              setIsModalOpen(false);
-              setTimeout(() => {
-                setModalContent({
-                  title: 'Settings Imported',
-                  content: (
-                    <div className="text-center py-4">
-                      <Check className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                      <p className="text-lg font-medium text-gray-900 mb-2">Settings imported successfully!</p>
-                      <p className="text-gray-600">Your configuration has been updated with the imported settings.</p>
-                    </div>
-                  )
-                });
-                setIsModalOpen(true);
-              }, 500);
-            }}>
-              <Upload className="h-4 w-4 mr-2" />
-              Import Settings
-            </Button>
-          </div>
-        </div>
-      )
-    });
-    setIsModalOpen(true);
-  };
-
-  const renderProfileSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              First Name
-            </label>
-            <input
-              type="text"
-              value={settings.firstName}
-              onChange={(e) => handleSettingChange('firstName', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Last Name
-            </label>
-            <input
-              type="text"
-              value={settings.lastName}
-              onChange={(e) => handleSettingChange('lastName', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              value={settings.email}
-              onChange={(e) => handleSettingChange('email', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone
-            </label>
-            <input
-              type="tel"
-              value={settings.phone}
-              onChange={(e) => handleSettingChange('phone', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        </div>
-      </div>
-      
-      <div className="pt-4 border-t border-gray-200">
-        <div className="flex space-x-3">
-          <Button variant="outline" onClick={handleExportSettings}>
-            <Download className="h-4 w-4 mr-2" />
-            Export Settings
-          </Button>
-          <Button variant="outline" onClick={handleImportSettings}>
-            <Upload className="h-4 w-4 mr-2" />
-            Import Settings
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderCompanySettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Business Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Company Name
-            </label>
-            <input
-              type="text"
-              value={settings.companyName}
-              onChange={(e) => handleSettingChange('companyName', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Address
-            </label>
-            <textarea
-              value={settings.companyAddress}
-              onChange={(e) => handleSettingChange('companyAddress', e.target.value)}
-              rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone
-            </label>
-            <input
-              type="tel"
-              value={settings.companyPhone}
-              onChange={(e) => handleSettingChange('companyPhone', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              value={settings.companyEmail}
-              onChange={(e) => handleSettingChange('companyEmail', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tax ID
-            </label>
-            <input
-              type="text"
-              value={settings.taxId}
-              onChange={(e) => handleSettingChange('taxId', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderNotificationSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium text-gray-900">Email Notifications</h4>
-              <p className="text-sm text-gray-500">Receive notifications via email</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.emailNotifications}
-                onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium text-gray-900">SMS Notifications</h4>
-              <p className="text-sm text-gray-500">Receive notifications via SMS</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.smsNotifications}
-                onChange={(e) => handleSettingChange('smsNotifications', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium text-gray-900">Order Updates</h4>
-              <p className="text-sm text-gray-500">Get notified when order status changes</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.orderUpdates}
-                onChange={(e) => handleSettingChange('orderUpdates', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium text-gray-900">Low Stock Alerts</h4>
-              <p className="text-sm text-gray-500">Alert when parts are running low</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.lowStockAlerts}
-                onChange={(e) => handleSettingChange('lowStockAlerts', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium text-gray-900">Invoice Reminders</h4>
-              <p className="text-sm text-gray-500">Remind about overdue invoices</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.invoiceReminders}
-                onChange={(e) => handleSettingChange('invoiceReminders', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-        </div>
-      </div>
-      
-      <div className="pt-4 border-t border-gray-200">
-        <Button variant="outline" onClick={handleTestNotifications} loading={isLoading}>
-          <Bell className="h-4 w-4 mr-2" />
-          Test Notifications
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderSecuritySettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Security Settings</h3>
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium text-gray-900">Two-Factor Authentication</h4>
-              <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.twoFactorEnabled}
-                onChange={(e) => handleSettingChange('twoFactorEnabled', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Session Timeout (minutes)
-            </label>
-            <select
-              value={settings.sessionTimeout}
-              onChange={(e) => handleSettingChange('sessionTimeout', parseInt(e.target.value))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value={15}>15 minutes</option>
-              <option value={30}>30 minutes</option>
-              <option value={60}>1 hour</option>
-              <option value={120}>2 hours</option>
-              <option value={480}>8 hours</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password Expiry (days)
-            </label>
-            <select
-              value={settings.passwordExpiry}
-              onChange={(e) => handleSettingChange('passwordExpiry', parseInt(e.target.value))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value={30}>30 days</option>
-              <option value={60}>60 days</option>
-              <option value={90}>90 days</option>
-              <option value={180}>180 days</option>
-              <option value={365}>1 year</option>
-              <option value={0}>Never</option>
-            </select>
-          </div>
-
-          <div className="pt-4 border-t border-gray-200">
-            <Button variant="outline" onClick={handleChangePassword} className="w-full">
-              <Key className="h-4 w-4 mr-2" />
-              Change Password
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderSystemSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">System Configuration</h3>
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium text-gray-900">Automatic Backups</h4>
-              <p className="text-sm text-gray-500">Automatically backup your data</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.autoBackup}
-                onChange={(e) => handleSettingChange('autoBackup', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Backup Frequency
-            </label>
-            <select
-              value={settings.backupFrequency}
-              onChange={(e) => handleSettingChange('backupFrequency', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-              disabled={!settings.autoBackup}
-            >
-              <option value="hourly">Every Hour</option>
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Data Retention (days)
-            </label>
-            <select
-              value={settings.dataRetention}
-              onChange={(e) => handleSettingChange('dataRetention', parseInt(e.target.value))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value={90}>90 days</option>
-              <option value={180}>180 days</option>
-              <option value={365}>1 year</option>
-              <option value={730}>2 years</option>
-              <option value={1825}>5 years</option>
-              <option value={-1}>Forever</option>
-            </select>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-2">Backup Status</h4>
-            <div className="space-y-2 text-sm text-gray-600">
-              <div className="flex justify-between">
-                <span>Last Backup:</span>
-                <span>{lastBackup.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Next Backup:</span>
-                <span>
-                  {settings.autoBackup 
-                    ? new Date(lastBackup.getTime() + (settings.backupFrequency === 'daily' ? 86400000 : 3600000)).toLocaleString()
-                    : 'Manual only'
-                  }
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Backup Size:</span>
-                <span>2.4 MB</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-gray-200 space-y-3">
-            <Button 
-              variant="outline" 
-              className="w-full" 
-              onClick={handleManualBackup}
-              loading={isLoading}
-            >
-              <Database className="h-4 w-4 mr-2" />
-              Create Manual Backup
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={handleRestoreBackup}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Restore from Backup
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={handleDownloadLogs}
-              loading={isLoading}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download System Logs
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderAppearanceSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Interface Customization</h3>
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Theme
-            </label>
-            <select
-              value={settings.theme}
-              onChange={(e) => handleSettingChange('theme', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="auto">Auto (System)</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Primary Color
-            </label>
-            <div className="grid grid-cols-6 gap-3">
-              {['blue', 'green', 'purple', 'red', 'orange', 'teal'].map((color) => (
-                <button
-                  key={color}
-                  onClick={() => handleSettingChange('primaryColor', color)}
-                  className={`w-12 h-12 rounded-lg border-2 transition-all ${
-                    settings.primaryColor === color ? 'border-gray-900 scale-110' : 'border-gray-300 hover:scale-105'
-                  } bg-${color}-500`}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-medium text-gray-900">Compact Mode</h4>
-              <p className="text-sm text-gray-500">Use smaller spacing and elements</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.compactMode}
-                onChange={(e) => handleSettingChange('compactMode', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          <div className="pt-4 border-t border-gray-200">
-            <Button variant="outline" onClick={() => {
-              setModalContent({
-                title: 'Theme Preview',
-                content: (
-                  <div className="space-y-4">
-                    <p className="text-gray-600">Preview how your interface will look with different themes:</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="p-4 border rounded-lg bg-white">
-                        <h4 className="font-medium mb-2">Light Theme</h4>
-                        <div className="space-y-2">
-                          <div className="h-2 bg-gray-200 rounded"></div>
-                          <div className="h-2 bg-blue-500 rounded w-3/4"></div>
-                          <div className="h-2 bg-gray-200 rounded w-1/2"></div>
-                        </div>
-                      </div>
-                      <div className="p-4 border rounded-lg bg-gray-900 text-white">
-                        <h4 className="font-medium mb-2">Dark Theme</h4>
-                        <div className="space-y-2">
-                          <div className="h-2 bg-gray-700 rounded"></div>
-                          <div className="h-2 bg-blue-400 rounded w-3/4"></div>
-                          <div className="h-2 bg-gray-700 rounded w-1/2"></div>
-                        </div>
-                      </div>
-                      <div className="p-4 border rounded-lg bg-gradient-to-br from-blue-50 to-purple-50">
-                        <h4 className="font-medium mb-2">Auto Theme</h4>
-                        <div className="space-y-2">
-                          <div className="h-2 bg-gray-300 rounded"></div>
-                          <div className="h-2 bg-purple-500 rounded w-3/4"></div>
-                          <div className="h-2 bg-gray-300 rounded w-1/2"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              });
-              setIsModalOpen(true);
-            }}>
-              <Palette className="h-4 w-4 mr-2" />
-              Preview Themes
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderLocalizationSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Regional Settings</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Language
-            </label>
-            <select
-              value={settings.language}
-              onChange={(e) => handleSettingChange('language', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-              <option value="de">Deutsch</option>
-              <option value="pt">Português</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Timezone
-            </label>
-            <select
-              value={settings.timezone}
-              onChange={(e) => handleSettingChange('timezone', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="America/New_York">Eastern Time</option>
-              <option value="America/Chicago">Central Time</option>
-              <option value="America/Denver">Mountain Time</option>
-              <option value="America/Los_Angeles">Pacific Time</option>
-              <option value="UTC">UTC</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date Format
-            </label>
-            <select
-              value={settings.dateFormat}
-              onChange={(e) => handleSettingChange('dateFormat', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="MM/dd/yyyy">MM/DD/YYYY</option>
-              <option value="dd/MM/yyyy">DD/MM/YYYY</option>
-              <option value="yyyy-MM-dd">YYYY-MM-DD</option>
-              <option value="dd MMM yyyy">DD MMM YYYY</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Currency
-            </label>
-            <select
-              value={settings.currency}
-              onChange={(e) => handleSettingChange('currency', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="USD">USD - US Dollar</option>
-              <option value="EUR">EUR - Euro</option>
-              <option value="GBP">GBP - British Pound</option>
-              <option value="CAD">CAD - Canadian Dollar</option>
-              <option value="MXN">MXN - Mexican Peso</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-medium text-blue-900 mb-2">Preview</h4>
-          <div className="text-sm text-blue-800 space-y-1">
-            <p><strong>Date:</strong> {new Date().toLocaleDateString(settings.language === 'en' ? 'en-US' : settings.language)}</p>
-            <p><strong>Time:</strong> {new Date().toLocaleTimeString()}</p>
-            <p><strong>Currency:</strong> {new Intl.NumberFormat(settings.language === 'en' ? 'en-US' : settings.language, {
-              style: 'currency',
-              currency: settings.currency
-            }).format(1234.56)}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'profile':
-        return renderProfileSettings();
-      case 'company':
-        return renderCompanySettings();
-      case 'notifications':
-        return renderNotificationSettings();
-      case 'security':
-        return renderSecuritySettings();
-      case 'system':
-        return renderSystemSettings();
-      case 'appearance':
-        return renderAppearanceSettings();
-      case 'localization':
-        return renderLocalizationSettings();
-      default:
-        return renderProfileSettings();
+  const getUserFromOrder = (orden: ServiceOrder): User | undefined => {
+    const userId = orden.idUser;
+    if (userId) {
+      return usuarios.find(u => u.id === userId);
     }
+    return undefined;
   };
 
   return (
-    <Layout title="Settings">
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Settings Navigation */}
-        <div className="lg:w-1/4">
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900">Settings</h2>
-            </div>
-            <nav className="p-2">
-              {settingsSections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => setActiveSection(section.id)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    activeSection === section.id
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <section.icon className="h-5 w-5" />
-                  <div>
-                    <div className="font-medium">{section.name}</div>
-                    <div className="text-xs text-gray-500">{section.description}</div>
-                  </div>
-                </button>
-              ))}
-            </nav>
+    <Layout title="Órdenes de Servicio">
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-neutral-900 to-neutral-700 bg-clip-text text-transparent">
+              Órdenes de Servicio
+            </h1>
+            <p className="text-neutral-600 mt-1">Gestiona las órdenes de trabajo del taller</p>
           </div>
+          <Button onClick={handleCreate} className="shadow-medium" disabled={isLoading}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva Orden
+          </Button>
         </div>
 
-        {/* Settings Content */}
-        <div className="lg:w-3/4">
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900">
-                    {settingsSections.find(s => s.id === activeSection)?.name}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {settingsSections.find(s => s.id === activeSection)?.description}
-                  </p>
+                  <p className="text-sm font-semibold text-neutral-600">Total Órdenes</p>
+                  <p className="text-3xl font-bold text-neutral-900 mt-1">{ordenes.length}</p>
                 </div>
-                <Button onClick={handleSave} loading={isLoading}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-neutral-500 to-neutral-600 shadow-medium">
+                  <Clock className="h-7 w-7 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-neutral-600">En Proceso</p>
+                  <p className="text-3xl font-bold text-neutral-900 mt-1">{getOrdenesEnProceso()}</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-primary-500 to-primary-600 shadow-medium">
+                  <AlertTriangle className="h-7 w-7 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-neutral-600">Completadas</p>
+                  <p className="text-3xl font-bold text-neutral-900 mt-1">{getOrdenesCompletadas()}</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-success-500 to-success-600 shadow-medium">
+                  <CheckCircle className="h-7 w-7 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-neutral-600">Pendientes</p>
+                  <p className="text-3xl font-bold text-neutral-900 mt-1">{getOrdenesPendientes()}</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-warning-500 to-warning-600 shadow-medium">
+                  <Clock className="h-7 w-7 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center">
+                <div className="w-2 h-2 bg-primary-500 rounded-full mr-3"></div>
+                Lista de Órdenes
+              </CardTitle>
+              <div className="flex space-x-4">
+                <Select value={filterEstado} onChange={e => setFilterEstado(e.target.value.toLowerCase())}>
+                  <option value="">Todos los estados</option>
+                  {estados.map((estado) => (
+                    <option key={estado.id} value={estado.stateType.toLowerCase()}>
+                      {estado.stateType}
+                    </option>
+                  ))}
+                </Select>
+                <div className="relative max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                  <Input
+                    placeholder="Buscar órdenes..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                <span className="ml-2 text-neutral-600">Cargando...</span>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-neutral-200">
+                  <thead className="bg-gradient-to-r from-neutral-50 to-neutral-100">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                        Orden
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                        Cliente / Vehículo
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                        Mecánico
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                        Estado
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                        Fecha de Salida
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-neutral-200">
+                    {filteredOrdenes.map((orden) => {
+                      const estadoName = getStateName(orden.idState);
+                      const EstadoIcon = AlertCircle;
+                      return (
+                        <tr key={orden.id} className="hover:bg-gradient-to-r hover:from-neutral-50 hover:to-neutral-100 transition-all duration-200">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="text-sm font-bold text-neutral-900">{orden.id}</div>
+                              <div className="text-sm text-neutral-500">
+                                {orden.entryDate}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="text-sm font-semibold text-neutral-900">
+                                {getClientFromOrder(orden)?.name || 'N/A'} {getClientFromOrder(orden)?.lastName || ''}
+                              </div>
+                              <div className="text-sm text-neutral-500">
+                                {getVehicleFromOrder(orden)?.brand || ''} • {getVehicleFromOrder(orden)?.serialNumberVIN || ''}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-neutral-900">{getUserFromOrder(orden)?.name || 'N/A'} {getUserFromOrder(orden)?.lastName || ''}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-neutral-200 text-neutral-700">
+                              <EstadoIcon className="h-3 w-3 mr-1" />
+                              {estadoName}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-bold text-neutral-900">
+                              {orden.exitDate}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end space-x-2">
+                              <Button variant="ghost" size="sm" className="hover:bg-accent-50 hover:text-accent-600" onClick={() => handleEdit(orden)}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleDelete(orden.id)} className="hover:bg-red-50 hover:text-red-600">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-4xl shadow-strong border border-neutral-200 max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-bold text-neutral-900 mb-6">
+                {selectedOrden ? 'Editar Orden de Servicio' : 'Nueva Orden de Servicio'}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <Select 
+                    name="idVehicle" 
+                    label="Vehículo" 
+                    value={formValues.idVehicle || ''} 
+                    onChange={e => {
+                      const value = e.target.value;
+                      setFormValues(prev => ({
+                        ...prev,
+                        idVehicle: value ? Number(value) : undefined
+                      }));
+                    }} 
+                    className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                  >
+                    <option value="">Seleccionar vehículo</option>
+                    {vehiculos.map(vehiculo => (
+                      <option key={vehiculo.id} value={vehiculo.id}>
+                        {vehiculo.brand} {vehiculo.model}
+                      </option>
+                    ))}
+                  </Select>
+                  
+                  <Select 
+                    label="Mecánico" 
+                    name="idUser" 
+                    value={formValues.idUser || ''} 
+                    onChange={e => setFormValues(prev => ({
+                      ...prev,
+                      idUser: Number(e.target.value)
+                    }))}
+                    className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                  >
+                    <option value="">Asignar mecánico</option>
+                    {usuarios.map(mecanico => (
+                      <option key={mecanico.id} value={mecanico.id}>
+                        {mecanico.name} {mecanico.lastName}
+                      </option>
+                    ))}
+                  </Select>
+                  
+                  <Select 
+                    label="Estado" 
+                    name="idState" 
+                    value={formValues.idState || ''} 
+                    onChange={e => setFormValues(prev => ({
+                      ...prev,
+                      idState: Number(e.target.value)
+                    }))}
+                    className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                  >
+                    <option value="">Asignar estado</option>
+                    {estados.map(estado => (
+                      <option key={estado.id} value={estado.id}>
+                        {estado.stateType}
+                      </option>
+                    ))}
+                  </Select>
+                  
+                  <Input
+                    label="Fecha de Entrada"
+                    type="date"
+                    name="entryDate"
+                    value={formValues.entryDate || ''}
+                    onChange={handleInputChange}
+                    className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                  />
+                  
+                  <Input
+                    label="Fecha de Salida"
+                    type="date"
+                    name="exitDate"
+                    value={formValues.exitDate || ''}
+                    onChange={handleInputChange}
+                    className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                  />
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mensaje del Cliente
+                    </label>
+                    <textarea
+                      name="clientMessage"
+                      value={formValues.clientMessage || ''}
+                      onChange={(e) => setFormValues(prev => ({
+                        ...prev,
+                        clientMessage: e.target.value
+                      }))}
+                      rows={4}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Mensaje del cliente sobre el problema..."
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-4 mt-6 pt-6 border-t border-gray-200">
+                <Button variant="outline" onClick={() => setShowModal(false)} disabled={isLoading}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSubmit} disabled={isLoading}>
+                  {isLoading ? 'Guardando...' : (selectedOrden ? 'Actualizar' : 'Crear')}
                 </Button>
               </div>
             </div>
-            <div className="p-6">
-              {renderContent()}
-            </div>
           </div>
-        </div>
+        )}
       </div>
-
-      {/* Modal for various actions */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={modalContent.title}
-        size="lg"
-      >
-        {modalContent.content}
-      </Modal>
     </Layout>
   );
 };

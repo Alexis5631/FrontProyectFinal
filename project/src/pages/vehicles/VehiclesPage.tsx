@@ -12,7 +12,7 @@ import { useApi } from '../../hooks/useApi';
 import { usePagination } from '../../hooks/usePagination';
 import { VehicleForm } from './VehicleForm';
 import { format } from 'date-fns';
-import { getVehicle } from '../../APIS/VehicleApis';
+import { deleteVehicle, getVehicle } from '../../APIS/VehicleApis';
 
 export const VehiclesPage: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -89,9 +89,9 @@ export const VehiclesPage: React.FC = () => {
   };
 
   const handleDelete = async (vehicle: Vehicle) => {
-    if (window.confirm(`Are you sure you want to delete ${vehicle.year} ${vehicle.make} ${vehicle.model}?`)) {
+    if (window.confirm(`Are you sure you want to delete ${vehicle.year} ${vehicle.model}?`)) {
       try {
-        await api.vehicles.delete(vehicle.id);
+        await deleteVehicle(vehicle.id);
         fetchVehicles();
       } catch (error) {
         console.error('Failed to delete vehicle:', error);
@@ -117,9 +117,8 @@ export const VehiclesPage: React.FC = () => {
       render: (vehicle) => (
         <div>
           <div className="font-medium text-gray-900">
-            {vehicle.year} {vehicle.make} {vehicle.model}
+            {vehicle.year} {vehicle.model}
           </div>
-          <div className="text-gray-500 text-sm">{vehicle.color} • {vehicle.licensePlate}</div>
         </div>
       ),
     },
@@ -129,7 +128,7 @@ export const VehiclesPage: React.FC = () => {
       sortable: true,
       render: (vehicle) => (
         <div className="text-sm text-gray-900 font-mono">
-          {vehicle.vin}
+          {vehicle.serialNumberVIN}
         </div>
       ),
     },
@@ -144,15 +143,9 @@ export const VehiclesPage: React.FC = () => {
       header: 'Owner',
       render: (vehicle) => (
         <div className="text-sm text-gray-900">
-          {vehicle.client ? `${vehicle.client.firstName} ${vehicle.client.lastName}` : 'Unknown'}
+          {vehicle.client ? `${vehicle.client.name} ${vehicle.client.lastName}` : 'Unknown'}
         </div>
       ),
-    },
-    {
-      key: 'createdAt',
-      header: 'Added',
-      sortable: true,
-      render: (vehicle) => format(new Date(vehicle.createdAt), 'MMM dd, yyyy'),
     },
     {
       key: 'actions',

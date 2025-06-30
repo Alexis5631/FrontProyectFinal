@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Button } from '../../components/common/Button';
-import { Part } from '../../types';
+import { Replacement } from '../../types';
 import { getReplacement, posReplacement, putReplacement } from '../../APIS/ReplacementApis';
 
 const schema = yup.object().shape({
