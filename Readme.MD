@@ -19,10 +19,10 @@ El objetivo principal es facilitar la administración de un taller mecánico, pe
 - Manejo de autenticación y autorización
 
 ## Estructura
-- **FrontProyectFinal/project/src/pages/**: Contiene las páginas principales del sistema (clientes, vehículos, órdenes, partes, facturas, auditoría, etc.)
-- **FrontProyectFinal/project/src/APIS/**: Funciones para consumir los endpoints de la API ASP.NET
-- **FrontProyectFinal/project/src/components/**: Componentes reutilizables de la interfaz
-- **FrontProyectFinal/project/src/types/**: Definición de tipos y modelos de datos
+- **/project/src/pages/**: Contiene las páginas principales del sistema (clientes, vehículos, órdenes, partes, facturas, auditoría, etc.)
+- **/project/src/APIS/**: Funciones para consumir los endpoints de la API ASP.NET
+- **/project/src/components/**: Componentes reutilizables de la interfaz
+- **/project/src/types/**: Definición de tipos y modelos de datos
 
 ## Instalación y ejecución
 1. Instala las dependencias con `npm install` o `yarn install`.
