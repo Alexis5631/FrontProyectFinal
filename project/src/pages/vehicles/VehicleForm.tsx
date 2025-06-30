@@ -5,9 +5,10 @@ import * as yup from 'yup';
 import { Button } from '../../components/common/Button';
 import { Vehicle, Client } from '../../types';
 import { getVehicle, postVehicle, putVehicle } from '../../APIS/VehicleApis';
+import { getClient } from '../../APIS/ClientApis';
 
 const schema = yup.object().shape({
-  idClient: yup.string().required('Client is required'),
+  idClient: yup.number().required('Client is required'),
   serialNumberVIN: yup.string().required('VIN is required'),
   brand: yup.string().required('Brand is required'),
   model: yup.string().required('Model is required'),
@@ -50,9 +51,20 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
   });
 
   useEffect(() => {
-    // Aquí deberías obtener los clientes reales si tienes endpoint, si no, dejar vacío
-    setClients([]);
-    setLoadingClients(false);
+    const fetchClients = async () => {
+      try {
+        const data = await getClient();
+        if (data) {
+          setClients(data);
+        }
+      } catch (error) {
+        console.error('Error loading clients:', error);
+      } finally {
+        setLoadingClients(false);
+      }
+    };
+    
+    fetchClients();
   }, []);
 
   useEffect(() => {
@@ -70,14 +82,37 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
 
   const onSubmit = async (data: VehicleFormData) => {
     try {
+      let response;
+      
       if (mode === 'create') {
-        await postVehicle(data as any); // Ajusta el tipo según tu modelo
+        response = await postVehicle(data as any);
       } else if (mode === 'edit' && vehicle) {
-        await putVehicle(data as any, vehicle.id);
+        response = await putVehicle(data as any, vehicle.id);
       }
+      
+      if (!response || !response.ok) {
+        // Manejar diferentes tipos de errores HTTP
+        if (response?.status === 404) {
+          alert('El vehículo no existe o ya fue eliminado.');
+        } else if (response?.status === 409) {
+          alert('Ya existe un vehículo con este VIN. Por favor, verifica el número de serie.');
+        } else if (response?.status === 400) {
+          alert('Datos inválidos. Por favor, verifica la información ingresada.');
+        } else if (response?.status === 403) {
+          alert('No tienes permisos para realizar esta acción.');
+        } else if (response?.status === 422) {
+          alert('El cliente seleccionado no existe o no es válido.');
+        } else {
+          alert('Error al guardar el vehículo. Por favor, inténtalo de nuevo.');
+        }
+        return;
+      }
+      
+      alert(mode === 'create' ? 'Vehículo creado exitosamente.' : 'Vehículo actualizado exitosamente.');
       onSuccess();
     } catch (error) {
       console.error('Failed to save vehicle:', error);
+      alert('Error inesperado al guardar el vehículo. Por favor, inténtalo de nuevo.');
     }
   };
 
@@ -101,6 +136,12 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
               VIN
             </label>
             <p className="text-sm text-gray-900">{vehicle.serialNumberVIN}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Brand
+            </label>
+            <p className="text-sm text-gray-900">{vehicle.brand}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -138,7 +179,7 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
             Owner *
           </label>
           <select
-            {...register('idClient')}
+            {...register('idClient', { valueAsNumber: true })}
             disabled={isReadOnly || loadingClients}
             className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
           >
@@ -155,17 +196,17 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
         </div>
 
         <div>
-          <label htmlFor="vin" className="block text-sm font-medium text-gray-700">
-            VIN *
+          <label htmlFor="brand" className="block text-sm font-medium text-gray-700">
+            Brand *
           </label>
           <input
-            {...register('serialNumberVIN')}
+            {...register('brand')}
             type="text"
             readOnly={isReadOnly}
             className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
           />
-          {errors.serialNumberVIN && (
-            <p className="mt-1 text-sm text-red-600">{errors.serialNumberVIN.message}</p>
+          {errors.brand && (
+            <p className="mt-1 text-sm text-red-600">{errors.brand.message}</p>
           )}
         </div>
 
@@ -198,6 +239,22 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
             <p className="mt-1 text-sm text-red-600">{errors.year.message}</p>
           )}
         </div>
+
+        <div>
+          <label htmlFor="serialNumberVIN" className="block text-sm font-medium text-gray-700">
+            VIN *
+          </label>
+          <input
+            {...register('serialNumberVIN')}
+            type="text"
+            readOnly={isReadOnly}
+            className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+          />
+          {errors.serialNumberVIN && (
+            <p className="mt-1 text-sm text-red-600">{errors.serialNumberVIN.message}</p>
+          )}
+        </div>
+
         <div>
           <label htmlFor="mileage" className="block text-sm font-medium text-gray-700">
             Mileage *

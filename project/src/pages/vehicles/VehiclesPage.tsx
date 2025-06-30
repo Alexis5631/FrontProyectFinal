@@ -76,25 +76,89 @@ export const VehiclesPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (vehicle: Vehicle) => {
-    setSelectedVehicle(vehicle);
-    setModalMode('edit');
-    setIsModalOpen(true);
+  const handleEdit = async (vehicle: Vehicle) => {
+    try {
+      setLoading(true);
+      // Verificar si el vehículo aún existe antes de editar
+      const response = await fetch(`http://localhost:5202/api/Vehicle/${vehicle.id}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          alert('El vehículo no existe o ya fue eliminado. La lista se actualizará.');
+          fetchVehicles(); // Actualizar la lista
+          return;
+        } else {
+          alert('Error al verificar el vehículo. Por favor, inténtalo de nuevo.');
+          return;
+        }
+      }
+      
+      setSelectedVehicle(vehicle);
+      setModalMode('edit');
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error checking vehicle:', error);
+      alert('Error al verificar el vehículo. Por favor, inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleView = (vehicle: Vehicle) => {
-    setSelectedVehicle(vehicle);
-    setModalMode('view');
-    setIsModalOpen(true);
+  const handleView = async (vehicle: Vehicle) => {
+    try {
+      setLoading(true);
+      // Verificar si el vehículo aún existe antes de ver
+      const response = await fetch(`http://localhost:5202/api/Vehicle/${vehicle.id}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          alert('El vehículo no existe o ya fue eliminado. La lista se actualizará.');
+          fetchVehicles(); // Actualizar la lista
+          return;
+        } else {
+          alert('Error al verificar el vehículo. Por favor, inténtalo de nuevo.');
+          return;
+        }
+      }
+      
+      setSelectedVehicle(vehicle);
+      setModalMode('view');
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error checking vehicle:', error);
+      alert('Error al verificar el vehículo. Por favor, inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (vehicle: Vehicle) => {
-    if (window.confirm(`Are you sure you want to delete ${vehicle.year} ${vehicle.model}?`)) {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar el vehículo ${vehicle.year} ${vehicle.brand} ${vehicle.model}?`)) {
       try {
-        await deleteVehicle(vehicle.id);
+        setLoading(true);
+        const response = await deleteVehicle(vehicle.id);
+        
+        if (!response || !response.ok) {
+          // Manejar diferentes tipos de errores HTTP
+          if (response?.status === 404) {
+            alert('El vehículo no existe o ya fue eliminado.');
+          } else if (response?.status === 409) {
+            alert('No se puede eliminar el vehículo porque está siendo usado en órdenes de servicio activas.');
+          } else if (response?.status === 403) {
+            alert('No tienes permisos para eliminar este vehículo.');
+          } else {
+            alert('Error al eliminar el vehículo. Por favor, inténtalo de nuevo.');
+          }
+          return;
+        }
+        
+        alert('Vehículo eliminado exitosamente.');
         fetchVehicles();
       } catch (error) {
         console.error('Failed to delete vehicle:', error);
+        alert('Error inesperado al eliminar el vehículo. Por favor, inténtalo de nuevo.');
+      } finally {
+        setLoading(false);
       }
     }
   };

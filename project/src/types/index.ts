@@ -10,7 +10,7 @@ export interface User {
   serviceOrders?: ServiceOrder;
   diagnostics?: Diagnostic;
   auditoryRecords?: Auditory;
-  roles?: Role;
+  role?: Role;
 }
 
 export interface Client {
