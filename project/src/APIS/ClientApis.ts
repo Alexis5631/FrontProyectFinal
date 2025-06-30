@@ -32,7 +32,7 @@ export const getClient = async (): Promise<Client[] | null> => {
     return null; // en caso de error
 };
 
-export const postClient = async (datos: Client): Promise<any | undefined> => {
+export const postClient = async (datos: Partial<Client>): Promise<any | undefined> => {
     try {
         // Remove id if present
         const { id, ...clientData } = datos;

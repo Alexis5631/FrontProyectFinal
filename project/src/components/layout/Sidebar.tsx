@@ -31,11 +31,11 @@ const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'mechanic', 'receptionist'] },
   { name: 'Clients', href: '/clients', icon: Users, roles: ['admin', 'receptionist'] },
   { name: 'Vehicles', href: '/vehicles', icon: Car, roles: ['admin', 'receptionist'] },
-  { name: 'Service Orders', href: '/orders', icon: Wrench, roles: ['admin', 'mechanic', 'receptionist'] },
+  { name: 'Order Details', href: '/orders', icon: Wrench, roles: ['admin', 'mechanic', 'receptionist'] },
   { name: 'Parts', href: '/parts', icon: Package, roles: ['admin', 'mechanic', 'receptionist'] },
   { name: 'Invoices', href: '/invoices', icon: FileText, roles: ['admin', 'receptionist'] },
   { name: 'Audit Logs', href: '/audit', icon: Activity, roles: ['admin'] },
-  { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin'] },
+  { name: 'Service Orders', href: '/settings', icon: Settings, roles: ['admin'] },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
@@ -108,13 +108,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
             <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
                 <span className="text-sm font-medium">
-                  {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  {user?.name?.[0]}{user?.lastName?.[0]}
                 </span>
               </div>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">
-                {user?.firstName} {user?.lastName}
+                {user?.name} {user?.lastName}
               </p>
               <p className="text-xs text-gray-400 capitalize">
                 {user?.role}

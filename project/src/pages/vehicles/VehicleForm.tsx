@@ -4,16 +4,15 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Button } from '../../components/common/Button';
 import { Vehicle, Client } from '../../types';
-import { api } from '../../services/api';
+import { getVehicle, postVehicle, putVehicle } from '../../APIS/VehicleApis';
+import { getClient } from '../../APIS/ClientApis';
 
 const schema = yup.object().shape({
-  clientId: yup.string().required('Client is required'),
-  vin: yup.string().required('VIN is required'),
-  make: yup.string().required('Make is required'),
+  idClient: yup.number().required('Client is required'),
+  serialNumberVIN: yup.string().required('VIN is required'),
+  brand: yup.string().required('Brand is required'),
   model: yup.string().required('Model is required'),
   year: yup.number().required('Year is required').min(1900).max(new Date().getFullYear() + 1),
-  color: yup.string().required('Color is required'),
-  licensePlate: yup.string().required('License plate is required'),
   mileage: yup.number().required('Mileage is required').min(0),
 });
 
@@ -25,13 +24,11 @@ interface VehicleFormProps {
 }
 
 interface VehicleFormData {
-  clientId: string;
-  vin: string;
-  make: string;
+  idClient: number;
+  brand: string;
   model: string;
   year: number;
-  color: string;
-  licensePlate: string;
+  serialNumberVIN: string;
   mileage: number;
 }
 
@@ -56,28 +53,28 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await api.clients.getAll({ pageSize: 100 });
-        setClients(response.data.data);
+        const data = await getClient();
+        if (data) {
+          setClients(data);
+        }
       } catch (error) {
-        console.error('Failed to fetch clients:', error);
+        console.error('Error loading clients:', error);
       } finally {
         setLoadingClients(false);
       }
     };
-
+    
     fetchClients();
   }, []);
 
   useEffect(() => {
     if (vehicle) {
       reset({
-        clientId: vehicle.clientId,
-        vin: vehicle.vin,
-        make: vehicle.make,
+        idClient: vehicle.idClient,
+        serialNumberVIN: vehicle.serialNumberVIN,
         model: vehicle.model,
         year: vehicle.year,
-        color: vehicle.color,
-        licensePlate: vehicle.licensePlate,
+        brand: vehicle.brand,
         mileage: vehicle.mileage,
       });
     }
@@ -85,21 +82,44 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
 
   const onSubmit = async (data: VehicleFormData) => {
     try {
+      let response;
+      
       if (mode === 'create') {
-        await api.vehicles.create(data);
+        await postVehicle(data as any);
       } else if (mode === 'edit' && vehicle) {
-        await api.vehicles.update(vehicle.id, data);
+        response = await putVehicle(data as any, vehicle.id);
       }
+      
+      // if (!response || !response.ok) {
+      //   // Manejar diferentes tipos de errores HTTP
+      //   if (response?.status === 404) {
+      //     alert('El vehículo no existe o ya fue eliminado.');
+      //   } else if (response?.status === 409) {
+      //     alert('Ya existe un vehículo con este VIN. Por favor, verifica el número de serie.');
+      //   } else if (response?.status === 400) {
+      //     alert('Datos inválidos. Por favor, verifica la información ingresada.');
+      //   } else if (response?.status === 403) {
+      //     alert('No tienes permisos para realizar esta acción.');
+      //   } else if (response?.status === 422) {
+      //     alert('El cliente seleccionado no existe o no es válido.');
+      //   } else {
+      //     alert('Error al guardar el vehículo. Por favor, inténtalo de nuevo.');
+      //   }
+      //   return;
+      // }
+      
+      alert(mode === 'create' ? 'Vehículo creado exitosamente.' : 'Vehículo actualizado exitosamente.');
       onSuccess();
     } catch (error) {
       console.error('Failed to save vehicle:', error);
+      alert('Error inesperado al guardar el vehículo. Por favor, inténtalo de nuevo.');
     }
   };
 
   const isReadOnly = mode === 'view';
 
   if (mode === 'view' && vehicle) {
-    const client = clients.find(c => c.id === vehicle.clientId);
+    const client = clients.find(c => c.id === vehicle.idClient);
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -108,20 +128,20 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
               Owner
             </label>
             <p className="text-sm text-gray-900">
-              {client ? `${client.firstName} ${client.lastName}` : 'Unknown'}
+              {client ? `${client.name} ${client.lastName}` : 'Unknown'}
             </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               VIN
             </label>
-            <p className="text-sm text-gray-900">{vehicle.vin}</p>
+            <p className="text-sm text-gray-900">{vehicle.serialNumberVIN}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Make
+              Brand
             </label>
-            <p className="text-sm text-gray-900">{vehicle.make}</p>
+            <p className="text-sm text-gray-900">{vehicle.brand}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -134,18 +154,6 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
               Year
             </label>
             <p className="text-sm text-gray-900">{vehicle.year}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Color
-            </label>
-            <p className="text-sm text-gray-900">{vehicle.color}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              License Plate
-            </label>
-            <p className="text-sm text-gray-900">{vehicle.licensePlate}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -167,53 +175,38 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="clientId" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="idClient" className="block text-sm font-medium text-gray-700">
             Owner *
           </label>
           <select
-            {...register('clientId')}
+            {...register('idClient', { valueAsNumber: true })}
             disabled={isReadOnly || loadingClients}
             className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
           >
             <option value="">Select a client</option>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>
-                {client.firstName} {client.lastName}
+                {client.name} {client.lastName}
               </option>
             ))}
           </select>
-          {errors.clientId && (
-            <p className="mt-1 text-sm text-red-600">{errors.clientId.message}</p>
+          {errors.idClient && (
+            <p className="mt-1 text-sm text-red-600">{errors.idClient.message}</p>
           )}
         </div>
 
         <div>
-          <label htmlFor="vin" className="block text-sm font-medium text-gray-700">
-            VIN *
+          <label htmlFor="brand" className="block text-sm font-medium text-gray-700">
+            Brand *
           </label>
           <input
-            {...register('vin')}
+            {...register('brand')}
             type="text"
             readOnly={isReadOnly}
             className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
           />
-          {errors.vin && (
-            <p className="mt-1 text-sm text-red-600">{errors.vin.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="make" className="block text-sm font-medium text-gray-700">
-            Make *
-          </label>
-          <input
-            {...register('make')}
-            type="text"
-            readOnly={isReadOnly}
-            className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
-          />
-          {errors.make && (
-            <p className="mt-1 text-sm text-red-600">{errors.make.message}</p>
+          {errors.brand && (
+            <p className="mt-1 text-sm text-red-600">{errors.brand.message}</p>
           )}
         </div>
 
@@ -248,32 +241,17 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
         </div>
 
         <div>
-          <label htmlFor="color" className="block text-sm font-medium text-gray-700">
-            Color *
+          <label htmlFor="serialNumberVIN" className="block text-sm font-medium text-gray-700">
+            VIN *
           </label>
           <input
-            {...register('color')}
+            {...register('serialNumberVIN')}
             type="text"
             readOnly={isReadOnly}
             className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
           />
-          {errors.color && (
-            <p className="mt-1 text-sm text-red-600">{errors.color.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="licensePlate" className="block text-sm font-medium text-gray-700">
-            License Plate *
-          </label>
-          <input
-            {...register('licensePlate')}
-            type="text"
-            readOnly={isReadOnly}
-            className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
-          />
-          {errors.licensePlate && (
-            <p className="mt-1 text-sm text-red-600">{errors.licensePlate.message}</p>
+          {errors.serialNumberVIN && (
+            <p className="mt-1 text-sm text-red-600">{errors.serialNumberVIN.message}</p>
           )}
         </div>
 

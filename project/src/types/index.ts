@@ -11,6 +11,7 @@ export interface User {
   diagnostics?: Diagnostic;
   auditoryRecords?: Auditory;
   roles?: Role;
+  role: string;
 }
 
 export interface Client {

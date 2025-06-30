@@ -1,17 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Button } from '../../components/common/Button';
 import { Client } from '../../types';
-import { api } from '../../services/api';
+import { getClient, postClient, putClient, deleteClient } from '../../APIS/ClientApis';
 
 const schema = yup.object().shape({
-  firstName: yup.string().required('First name is required'),
+  name: yup.string().required('Name is required'),
   lastName: yup.string().required('Last name is required'),
   email: yup.string().email('Invalid email').required('Email is required'),
   phone: yup.string().required('Phone is required'),
-  address: yup.string().required('Address is required'),
+  identification: yup.string().required('Identification is required'),
 });
 
 interface ClientFormProps {
@@ -22,11 +22,11 @@ interface ClientFormProps {
 }
 
 interface ClientFormData {
-  firstName: string;
+  name: string;
   lastName: string;
   email: string;
   phone: string;
-  address: string;
+  identification: string;
 }
 
 export const ClientForm: React.FC<ClientFormProps> = ({
@@ -47,11 +47,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({
   useEffect(() => {
     if (client) {
       reset({
-        firstName: client.firstName,
+        name: client.name,
         lastName: client.lastName,
         email: client.email,
         phone: client.phone,
-        address: client.address,
+        identification: client.identification,
       });
     }
   }, [client, reset]);
@@ -59,9 +59,13 @@ export const ClientForm: React.FC<ClientFormProps> = ({
   const onSubmit = async (data: ClientFormData) => {
     try {
       if (mode === 'create') {
-        await api.clients.create(data);
+        await postClient(data);
       } else if (mode === 'edit' && client) {
-        await api.clients.update(client.id, data);
+        const clientData: Client = {
+          ...data,
+          id: client.id
+        };
+        await putClient(clientData, client.id);
       }
       onSuccess();
     } catch (error) {
@@ -79,7 +83,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               First Name
             </label>
-            <p className="text-sm text-gray-900">{client.firstName}</p>
+            <p className="text-sm text-gray-900">{client.name}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -101,9 +105,9 @@ export const ClientForm: React.FC<ClientFormProps> = ({
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
+              Identification
             </label>
-            <p className="text-sm text-gray-900">{client.address}</p>
+            <p className="text-sm text-gray-900">{client.identification}</p>
           </div>
         </div>
         <div className="flex justify-end">
@@ -120,16 +124,16 @@ export const ClientForm: React.FC<ClientFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-            First Name *
+            Name 
           </label>
           <input
-            {...register('firstName')}
+            {...register('name')}
             type="text"
             readOnly={isReadOnly}
             className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
           />
-          {errors.firstName && (
-            <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+          {errors.name && (
+            <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
           )}
         </div>
 
@@ -180,16 +184,16 @@ export const ClientForm: React.FC<ClientFormProps> = ({
 
         <div className="md:col-span-2">
           <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-            Address *
+            Identification *
           </label>
           <textarea
-            {...register('address')}
+            {...register('identification')}
             rows={3}
             readOnly={isReadOnly}
             className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
           />
-          {errors.address && (
-            <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>
+          {errors.identification && (
+            <p className="mt-1 text-sm text-red-600">{errors.identification.message}</p>
           )}
         </div>
       </div>

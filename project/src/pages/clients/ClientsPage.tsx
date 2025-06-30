@@ -7,8 +7,7 @@ import { Button } from '../../components/common/Button';
 import { SearchInput } from '../../components/common/SearchInput';
 import { Modal } from '../../components/common/Modal';
 import { Client } from '../../types';
-import { api } from '../../services/api';
-import { useApi } from '../../hooks/useApi';
+import { getClient, postClient, putClient, deleteClient } from '../../APIS/ClientApis';
 import { usePagination } from '../../hooks/usePagination';
 import { ClientForm } from './ClientForm';
 import { format } from 'date-fns';
@@ -21,10 +20,11 @@ export const ClientsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState<string>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const location = useLocation();
   const pagination = usePagination({ initialPageSize: 20 });
-  const { data, loading, error, execute } = useApi(api.clients.getAll);
 
   // Check if we should open modal from navigation state
   useEffect(() => {
@@ -37,21 +37,57 @@ export const ClientsPage: React.FC = () => {
   }, [location.state]);
 
   const fetchClients = useCallback(async () => {
-    const params = {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      search: searchTerm,
-      sortBy: sortKey,
-      sortOrder: sortDirection,
-    };
+    setLoading(true);
+    setError(null);
     
     try {
-      const response = await execute(params);
-      setClients(response.data);
-    } catch (error) {
-      console.error('Failed to fetch clients:', error);
+      const response = await getClient();
+      if (response) {
+        // Apply search filter
+        let filteredClients = response;
+        if (searchTerm) {
+          filteredClients = response.filter(client => 
+            client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            client.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            client.phone.includes(searchTerm)
+          );
+        }
+
+        // Apply sorting
+        filteredClients.sort((a, b) => {
+          const aValue = a[sortKey as keyof Client];
+          const bValue = b[sortKey as keyof Client];
+          
+          if (typeof aValue === 'string' && typeof bValue === 'string') {
+            return sortDirection === 'asc' 
+              ? aValue.localeCompare(bValue)
+              : bValue.localeCompare(aValue);
+          }
+          
+          if (aValue instanceof Date && bValue instanceof Date) {
+            return sortDirection === 'asc' 
+              ? aValue.getTime() - bValue.getTime()
+              : bValue.getTime() - aValue.getTime();
+          }
+          
+          return 0;
+        });
+
+        // Apply pagination
+        const startIndex = (pagination.page - 1) * pagination.pageSize;
+        const endIndex = startIndex + pagination.pageSize;
+        const paginatedClients = filteredClients.slice(startIndex, endIndex);
+        
+        setClients(paginatedClients);
+      }
+    } catch (err) {
+      setError('Failed to fetch clients');
+      console.error('Failed to fetch clients:', err);
+    } finally {
+      setLoading(false);
     }
-  }, [execute, pagination.page, pagination.pageSize, searchTerm, sortKey, sortDirection]);
+  }, [searchTerm, sortKey, sortDirection, pagination.page, pagination.pageSize]);
 
   useEffect(() => {
     fetchClients();
@@ -87,9 +123,9 @@ export const ClientsPage: React.FC = () => {
   };
 
   const handleDelete = async (client: Client) => {
-    if (window.confirm(`Are you sure you want to delete ${client.firstName} ${client.lastName}?`)) {
+    if (window.confirm(`Are you sure you want to delete ${client.name} ${client.lastName}?`)) {
       try {
-        await api.clients.delete(client.id);
+        await deleteClient(client.id);
         fetchClients();
       } catch (error) {
         console.error('Failed to delete client:', error);
@@ -115,7 +151,7 @@ export const ClientsPage: React.FC = () => {
       render: (client) => (
         <div>
           <div className="font-medium text-gray-900">
-            {client.firstName} {client.lastName}
+            {client.name} {client.lastName}
           </div>
           <div className="text-gray-500 text-sm">{client.email}</div>
         </div>
@@ -127,19 +163,13 @@ export const ClientsPage: React.FC = () => {
       sortable: true,
     },
     {
-      key: 'address',
-      header: 'Address',
+      key: 'identification',
+      header: 'identification',
       render: (client) => (
         <div className="text-sm text-gray-900 max-w-xs truncate">
-          {client.address}
+          {client.identification}
         </div>
       ),
-    },
-    {
-      key: 'createdAt',
-      header: 'Created',
-      sortable: true,
-      render: (client) => format(new Date(client.createdAt), 'MMM dd, yyyy'),
     },
     {
       key: 'actions',
@@ -194,18 +224,14 @@ export const ClientsPage: React.FC = () => {
           columns={columns}
           loading={loading}
           error={error}
-          pagination={
-            data
-              ? {
-                  page: pagination.page,
-                  pageSize: pagination.pageSize,
-                  total: data.total,
-                  totalPages: data.totalPages,
-                  onPageChange: pagination.setPage,
-                  onPageSizeChange: pagination.setPageSize,
-                }
-              : undefined
-          }
+          pagination={{
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: clients.length,
+            totalPages: Math.ceil(clients.length / pagination.pageSize),
+            onPageChange: pagination.setPage,
+            onPageSizeChange: pagination.setPageSize,
+          }}
           onSort={handleSort}
           sortKey={sortKey}
           sortDirection={sortDirection}

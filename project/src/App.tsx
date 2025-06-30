@@ -6,11 +6,11 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { ClientsPage } from './pages/clients/ClientsPage';
 import { VehiclesPage } from './pages/vehicles/VehiclesPage';
-import { OrdersPage } from './pages/orders/OrdersPage';
 import { PartsPage } from './pages/parts/PartsPage';
-import { InvoicesPage } from './pages/invoices/InvoicesPage';
 import { AuditLogsPage } from './pages/audit/AuditLogsPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
+import { Facturacion } from './pages/invoices/InvoicesPage';
+import { DetallesOrden } from './pages/orders/OrdersPage';
 
 function App() {
   return (
@@ -46,7 +46,7 @@ function App() {
             path="/orders"
             element={
               <ProtectedRoute>
-                <OrdersPage />
+                <DetallesOrden />
               </ProtectedRoute>
             }
           />
@@ -62,7 +62,7 @@ function App() {
             path="/invoices"
             element={
               <ProtectedRoute roles={['admin', 'receptionist']}>
-                <InvoicesPage />
+                <Facturacion />
               </ProtectedRoute>
             }
           />
