@@ -3,15 +3,40 @@ export interface User {
   name: string;
   lastName: string;
   email: string;
-  passwordHash: string;
+  password: string;
   username: string;
-  userRoles?: UserRole;
+  isActive: boolean;
   userSpecializations?: UserSpecialization;
   serviceOrders?: ServiceOrder;
   diagnostics?: Diagnostic;
   auditoryRecords?: Auditory;
   roles?: Role;
-  role: string;
+  createdAt: string;
+  updatedAt: string;
+  rol: UserRole;
+}
+
+export interface AuthState {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
+export interface DataUserDto {
+  id: number;
+  name: string;
+  lastName: string;
+  userName: string;
+  email: string;
+  token: string;
+  refreshToken: string;
+  isAuthenticated: boolean;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  rols: UserRole;
+  message?: string;
 }
 
 export interface Client {
@@ -150,12 +175,7 @@ export interface State {
   serviceOrders?: ServiceOrder;
 }
 
-export interface UserRole {
-  idUser: number;
-  idRole: number;
-  user?: User;
-  role?: Role;
-}
+export type UserRole = 'Administrator' | 'Recepcionist' | 'Mechanic';
 
 export interface UserSpecialization {
   idUser: number;
