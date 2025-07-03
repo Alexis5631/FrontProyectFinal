@@ -29,13 +29,13 @@ export const getInvoice = async (): Promise<Invoice[] | null> => {
 
 export const postInvoice = async (datos: Invoice): Promise<any> => {
   // 2) quitamos el id antes de enviar
-  const { id, ...clientData } = datos;
-  console.log("📤 postInvoice enviando:", clientData);
+  const { id, ...invoiceData } = datos;
+  console.log("📤 postInvoice enviando:", invoiceData);
 
   const response = await fetch(`${URL_API}/api/Invoice`, {
     method: "POST",
     headers: getHeaders(),
-    body: JSON.stringify(clientData)
+    body: JSON.stringify(invoiceData)
   });
 
   if (!response.ok) {

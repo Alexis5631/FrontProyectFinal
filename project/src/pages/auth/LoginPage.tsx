@@ -54,17 +54,16 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-black">
-    <div className="w-full md:w-1/2 flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="max-w-xl w-full space-y-8 flex flex-col items-center justify-center">
          {/* Logo y título */}
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="bg-gradient-to-r from-indigo-700 to-purple-700 p-4 rounded-full shadow-lg">
+            <div className="bg-blue-600 p-4 rounded-full shadow-lg">
               <Wrench className="h-10 w-10 text-white" />
             </div>
           </div>
-          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+          <h2 className="text-3xl font-extrabold text-blue-600">
             AutoTaller Manager
           </h2>
           <p className="mt-2 text-sm text-zinc-400">
@@ -73,7 +72,7 @@ export function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-zinc-900 p-8 rounded-2xl shadow-lg border border-zinc-700 space-y-6">
+          <div className="bg-white p-12 rounded-2xl shadow-lg border border-zinc-200 space-y-8">
             <Input
               label="Nombre de usuario"
               type="text"
@@ -102,7 +101,7 @@ export function LoginPage() {
             <Button
               type="submit"
               isLoading={isLoading}
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium rounded-lg shadow-md transition duration-300"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition duration-300"
               size="lg"
             >
               Iniciar Sesión
@@ -110,7 +109,6 @@ export function LoginPage() {
           </div>
         </form>
       </div>
-    </div>
     </div>
   );
 }

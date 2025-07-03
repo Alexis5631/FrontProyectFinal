@@ -114,10 +114,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">
-                {user?.name} {user?.lastName}
+              <p className="text-sm font-semibold text-white truncate">
+                {user?.username}
               </p>
-              <p className="text-xs text-gray-400 capitalize">
+              <p className="text-xs text-gray-400 capitalize mt-1">
                 {user?.rol}
               </p>
             </div>

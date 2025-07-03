@@ -183,12 +183,12 @@ export const ClientForm: React.FC<ClientFormProps> = ({
         </div>
 
         <div className="md:col-span-2">
-          <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="identification" className="block text-sm font-medium text-gray-700">
             Identification *
           </label>
-          <textarea
+          <input
             {...register('identification')}
-            rows={3}
+            type="text"
             readOnly={isReadOnly}
             className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
           />
