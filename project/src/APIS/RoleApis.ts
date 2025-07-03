@@ -1,83 +1,63 @@
 import type { Role } from "../types";
 
-const URL_API = "http://localhost:5070";
-const myHeaders = new Headers({
-    "Content-Type": "application/json"
-});
+const URL_API = "http://localhost:5202";
+
+function getHeaders() {
+  const token = localStorage.getItem('token') || '';
+  return {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  };
+}
 
 export const getRole = async (): Promise<Role[] | null> => {
-    try {
-        const response = await fetch(`${URL_API}/api/Role`, {
-            method: 'GET',
-            headers: myHeaders
-        });
-
-        switch (response.status) {
-            case 200:
-                const data: Role[] = await response.json();
-                return data;
-            case 401:
-                console.error("No autorizado o token inválido");
-                break;
-            case 404:
-                console.error("El rol no existe");
-                break;
-            default:
-                console.error("Error inesperado. Contacte al administrador.");
-        }
-    } catch (error) {
-        console.error("Error de red o servidor:", error);
+  try {
+    const response = await fetch(`${URL_API}/api/Role`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
+    if (response.ok) {
+      return await response.json();
     }
-
-    return null; // en caso de error
+    console.error(`GET /api/Role falló con status ${response.status}`);
+  } catch (error) {
+    console.error("Error de red o servidor en getRole:", error);
+  }
+  return null;
 };
 
-export const postRole = async (datos: Role): Promise<any | undefined> => {
-    try {
-        // Remove id if present
-        const { id, ...rolData } = datos;
-        console.log("Datos enviados a postRole:", rolData);
 
-        const response = await fetch(`${URL_API}/api/Role`, {
-            method: "POST",
-            headers: myHeaders,
-            body: JSON.stringify(rolData)
-        });
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Error en la solicitud POST: ${response.status} - ${errorText}`);
-            return undefined;
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error en la solicitud POST:', error);
-    }
-}
+export const postRole = async (datos: Role): Promise<any> => {
+  // 2) quitamos el id antes de enviar
+  const { id, ...roleData } = datos;
+  console.log("📤 postRole enviando:", roleData);
 
-export const putRole = async (datos: Role, id: number | string): Promise<Response | undefined> => {
-    try {
-        return await fetch(`${URL_API}/api/Role/${id}`, {
-            method: "PUT",
-            headers: myHeaders,
-            body: JSON.stringify(datos)
-        });
-    } catch (error) {
-        console.error('Error en la solicitud PUT:', error);
-    }
-}
+  const response = await fetch(`${URL_API}/api/Role`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(roleData)
+  });
 
-export const deleteRole = async (id: number | string): Promise<Response | undefined> => {
-    try {
-        const response = await fetch(`${URL_API}/api/Role/${id}`, {
-            method: "DELETE",
-            headers: myHeaders,
-        });
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Error en la solicitud DELETE: ${response.status} - ${errorText}`);
-        }
-        return response;
-    } catch (error) {
-        console.error('Error en la solicitud DELETE:', error);
-    }
-}
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`POST /api/Role ERROR ${response.status}:`, errorText);
+    throw new Error(errorText || `Error ${response.status}`);
+  }
+
+  // 3) el servidor responde con Created (201) y el objeto creado (incluyendo el nuevo id)
+  return response.json();
+};
+
+export const putRole = (datos: Role, id: number | string) =>
+  fetch(`${URL_API}/api/Role/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(datos)
+  });
+
+
+export const deleteRole = (id: number | string) =>
+  fetch(`${URL_API}/api/Role/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });

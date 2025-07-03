@@ -30,7 +30,7 @@ export const getUser = async (): Promise<User[] | null> => {
 export const postUser = async (datos: User): Promise<any> => {
   // 2) quitamos el id antes de enviar
   const { id, ...userData } = datos;
-  console.log("📤 postAuditory enviando:", userData);
+  console.log("📤 postUser enviando:", userData);
 
   const response = await fetch(`${URL_API}/api/User`, {
     method: "POST",

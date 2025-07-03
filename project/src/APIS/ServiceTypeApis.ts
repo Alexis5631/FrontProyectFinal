@@ -1,101 +1,63 @@
 import type { ServiceType } from "../types";
 
 const URL_API = "http://localhost:5202";
-const myHeaders = new Headers({
-    "Content-Type": "application/json"
-});
+
+function getHeaders() {
+  const token = localStorage.getItem('token') || '';
+  return {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  };
+}
 
 export const getServiceType = async (): Promise<ServiceType[] | null> => {
-    try {
-        const response = await fetch(`${URL_API}/api/ServiceType`, {
-            method: 'GET',
-            headers: myHeaders
-        });
-
-        switch (response.status) {
-            case 200:
-                const data: ServiceType[] = await response.json();
-                return data;
-            case 401:
-                console.error("No autorizado o token inválido");
-                break;
-            case 404:
-                console.error("El ServiceType no existe");
-                break;
-            default:
-                console.error("Error inesperado. Contacte al administrador.");
-        }
-    } catch (error) {
-        console.error("Error de red o servidor:", error);
+  try {
+    const response = await fetch(`${URL_API}/api/ServiceType`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
+    if (response.ok) {
+      return await response.json();
     }
-
-    return null; // en caso de error
+    console.error(`GET /api/ServiceType falló con status ${response.status}`);
+  } catch (error) {
+    console.error("Error de red o servidor en getServiceType:", error);
+  }
+  return null;
 };
 
-export const postServiceType = async (datos: ServiceType): Promise<any | undefined> => {
-    try {
-        // Remove id if present
-        const { id, ...serviceOrderData } = datos;
-        console.log("Datos enviados a postServiceType:", serviceOrderData);
 
-        const response = await fetch(`${URL_API}/api/ServiceType`, {
-            method: "POST",
-            headers: myHeaders,
-            body: JSON.stringify(serviceOrderData)
-        });
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Error en la solicitud POST: ${response.status} - ${errorText}`);
-            return undefined;
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error en la solicitud POST:', error);
-    }
-}
+export const postServiceType = async (datos: ServiceType): Promise<any> => {
+  // 2) quitamos el id antes de enviar
+  const { id, ...serviceTypeData } = datos;
+  console.log("📤 postServiceType enviando:", serviceTypeData);
 
-export const generateServiceType = async (serviceTypeId: number, datos: ServiceType): Promise<any | undefined> => {
-    try {
-        // Remove id if present
-        const { id, ...serviceTypeData } = datos;
-        console.log("Datos enviados a postServiceType:", serviceTypeData);
+  const response = await fetch(`${URL_API}/api/ServiceType`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(serviceTypeData)
+  });
 
-        const response = await fetch(`${URL_API}/api/ServiceType/${serviceTypeId}/details`, {
-            method: "POST",
-            headers: myHeaders,
-            body: JSON.stringify(serviceTypeData)
-        });
-        const result = await response.json(); // Siempre intenta leer el JSON
-        return result;
-    } catch (error) {
-        console.error('Error en la solicitud POST:', error);
-    }
-}
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`POST /api/ServiceType ERROR ${response.status}:`, errorText);
+    throw new Error(errorText || `Error ${response.status}`);
+  }
 
-export const putServiceType = async (datos: ServiceType, id: number | string): Promise<Response | undefined> => {
-    try {
-        return await fetch(`${URL_API}/api/ServiceType/${id}`, {
-            method: "PUT",
-            headers: myHeaders,
-            body: JSON.stringify(datos)
-        });
-    } catch (error) {
-        console.error('Error en la solicitud PUT:', error);
-    }
-}
+  // 3) el servidor responde con Created (201) y el objeto creado (incluyendo el nuevo id)
+  return response.json();
+};
 
-export const deleteServiceType = async (id: number | string): Promise<Response | undefined> => {
-    try {
-        const response = await fetch(`${URL_API}/api/ServiceType/${id}`, {
-            method: "DELETE",
-            headers: myHeaders,
-        });
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Error en la solicitud DELETE: ${response.status} - ${errorText}`);
-        }
-        return response;
-    } catch (error) {
-        console.error('Error en la solicitud DELETE:', error);
-    }
-}
+export const putServiceType = (datos: ServiceType, id: number | string) =>
+  fetch(`${URL_API}/api/ServiceType/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(datos)
+  });
+
+
+export const deleteServiceType = (id: number | string) =>
+  fetch(`${URL_API}/api/ServiceType/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
