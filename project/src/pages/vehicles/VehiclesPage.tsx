@@ -79,20 +79,6 @@ export const VehiclesPage: React.FC = () => {
   const handleEdit = async (vehicle: Vehicle) => {
     try {
       setLoading(true);
-      // Verificar si el vehículo aún existe antes de editar
-      const response = await fetch(`http://localhost:5202/api/Vehicle/${vehicle.id}`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          alert('El vehículo no existe o ya fue eliminado. La lista se actualizará.');
-          fetchVehicles(); // Actualizar la lista
-          return;
-        } else {
-          alert('Error al verificar el vehículo. Por favor, inténtalo de nuevo.');
-          return;
-        }
-      }
-      
       setSelectedVehicle(vehicle);
       setModalMode('edit');
       setIsModalOpen(true);
@@ -107,19 +93,6 @@ export const VehiclesPage: React.FC = () => {
   const handleView = async (vehicle: Vehicle) => {
     try {
       setLoading(true);
-      // Verificar si el vehículo aún existe antes de ver
-      const response = await fetch(`http://localhost:5202/api/Vehicle/${vehicle.id}`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          alert('El vehículo no existe o ya fue eliminado. La lista se actualizará.');
-          fetchVehicles(); // Actualizar la lista
-          return;
-        } else {
-          alert('Error al verificar el vehículo. Por favor, inténtalo de nuevo.');
-          return;
-        }
-      }
       
       setSelectedVehicle(vehicle);
       setModalMode('view');

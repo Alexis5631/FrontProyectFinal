@@ -262,40 +262,6 @@ export const ReceptionistDashboard: React.FC = () => {
             )}
           </div>
         </div>
-
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-2 gap-4">
-              {quickActions.map((action) => (
-                <button
-                  key={action.id}
-                  onClick={() => handleQuickAction(action.id)}
-                  className="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 text-center transition-colors group"
-                >
-                  <action.icon className={`h-6 w-6 mx-auto mb-2 ${action.color} group-hover:scale-110 transition-transform`} />
-                  <span className="text-sm font-medium text-gray-900 block">{action.name}</span>
-                  <span className="text-xs text-gray-500 block mt-1">{action.description}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-900">Today's Orders</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/orders')}
-          >
-            View All
-          </Button>
-        </div>
       </div>
     </div>
   );

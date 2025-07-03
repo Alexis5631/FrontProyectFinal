@@ -5,7 +5,7 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Plus, Search, Edit, Trash2, AlertTriangle, Package, TrendingDown, TrendingUp, DollarSign, RefreshCw } from 'lucide-react';
 import { Replacement } from '../../types';
-import { getReplacement, posReplacement, putReplacement, deleteReplacement } from '../../APIS/ReplacementApis';
+import { getReplacement, postReplacement, putReplacement, deleteReplacement } from '../../APIS/ReplacementApis';
 import { Layout } from '../../components/layout/Layout';
 
 export const PartsPage: React.FC = () => {
@@ -116,7 +116,7 @@ export const PartsPage: React.FC = () => {
         response = await putReplacement(formValues as Replacement, selectedReplacement.id);
       } else {
         // Create
-        response = await posReplacement(formValues as Replacement);
+        response = await postReplacement(formValues as Replacement);
       }
       
       // Verificar si hay respuesta y si es un error HTTP

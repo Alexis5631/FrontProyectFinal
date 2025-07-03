@@ -59,7 +59,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
   const onSubmit = async (data: ClientFormData) => {
     try {
       if (mode === 'create') {
-        await postClient(data);
+        await postClient({ ...data, id: 0 });
       } else if (mode === 'edit' && client) {
         const clientData: Client = {
           ...data,

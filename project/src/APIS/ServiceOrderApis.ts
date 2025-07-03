@@ -61,3 +61,21 @@ export const deleteServiceOrder = (id: number | string) =>
     method: "DELETE",
     headers: getHeaders(),
   });
+
+  export const generateServiceOrder = async (serviceOrderId: number, datos: ServiceOrder): Promise<any | undefined> => {
+    try {
+        // Remove id if present
+        const { id, ...serviceOrderData } = datos;
+        console.log("Datos enviados a postServiceOrder:", serviceOrderData);
+
+        const response = await fetch(`${URL_API}/api/ServiceOrder/${serviceOrderId}/details`, {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify(serviceOrderData)
+        });
+        const result = await response.json(); // Siempre intenta leer el JSON
+        return result;
+    } catch (error) {
+        console.error('Error en la solicitud POST:', error);
+    }
+}

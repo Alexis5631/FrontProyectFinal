@@ -28,14 +28,15 @@ interface NavItem {
 }
 
 const navigation: NavItem[] = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'mechanic', 'receptionist'] },
-  { name: 'Clients', href: '/clients', icon: Users, roles: ['admin', 'receptionist'] },
-  { name: 'Vehicles', href: '/vehicles', icon: Car, roles: ['admin', 'receptionist'] },
-  { name: 'Order Details', href: '/orders', icon: Wrench, roles: ['admin', 'mechanic', 'receptionist'] },
-  { name: 'Parts', href: '/parts', icon: Package, roles: ['admin', 'mechanic', 'receptionist'] },
-  { name: 'Invoices', href: '/invoices', icon: FileText, roles: ['admin', 'receptionist'] },
-  { name: 'Audit Logs', href: '/audit', icon: Activity, roles: ['admin'] },
-  { name: 'Service Orders', href: '/settings', icon: Settings, roles: ['admin'] },
+  { name: 'Dashboard', href: '/dashboard/admin', icon: LayoutDashboard, roles: ['Administrator'] },
+  { name: 'Dashboard', href: '/dashboard/mechanic', icon: LayoutDashboard, roles: ['Mechanic'] },
+  { name: 'Dashboard', href: '/dashboard/receptionist', icon: LayoutDashboard, roles: ['Recepcionist'] },
+  { name: 'Service Orders', href: '/orders', icon: Wrench, roles: ['Mechanic', 'Recepcionist', 'Administrator'] },
+  { name: 'Invoices', href: '/invoices', icon: FileText, roles: ['Mechanic', 'Administrator'] },
+  { name: 'Clients', href: '/clients', icon: Users, roles: ['Recepcionist', 'Administrator'] },
+  { name: 'Vehicles', href: '/vehicles', icon: Car, roles: ['Recepcionist', 'Administrator'] },
+  { name: 'Audit Logs', href: '/audit', icon: Activity, roles: ['Administrator'] },
+  { name: 'Service Orders', href: '/settings', icon: Settings, roles: ['Administrator'] },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
@@ -43,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const { user, logout } = useAuth();
 
   const filteredNavigation = navigation.filter(item =>
-    user?.role && item.roles.includes(user.role)
+    user?.rol && item.roles.includes(user.rol)
   );
 
   const isActive = (href: string) => {
@@ -117,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                 {user?.name} {user?.lastName}
               </p>
               <p className="text-xs text-gray-400 capitalize">
-                {user?.role}
+                {user?.rol}
               </p>
             </div>
           </div>

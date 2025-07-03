@@ -61,3 +61,30 @@ export const deleteInvoice = (id: number | string) =>
     method: "DELETE",
     headers: getHeaders(),
   });
+
+export const generateInvoice = async (
+  serviceOrderId: number
+): Promise<any | undefined> => {
+  try {
+    console.log("Generando factura para service order:", serviceOrderId);
+
+    const response = await fetch(`${URL_API}/api/Invoice/generate/${serviceOrderId}`, {
+      method: "POST",
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Error en la solicitud POST: ${response.status} - ${errorText}`);
+      return undefined;
+    }
+
+    const result = await response.json();
+    console.log("Factura generada exitosamente:", result);
+    return result;
+
+  } catch (error) {
+    console.error('Error en la solicitud POST:', error);
+    return undefined;
+  }
+};

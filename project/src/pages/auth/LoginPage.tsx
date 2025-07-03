@@ -6,7 +6,7 @@ import { Wrench, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function LoginPage() {
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, user } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -33,7 +33,19 @@ export function LoginPage() {
 
       // Espera 100ms para asegurarte que el contexto se actualizó antes de redirigir
       setTimeout(() => {
-        navigate('/dashboard');
+        switch (user?.rol) {
+          case 'Administrator':
+            navigate('/dashboard/admin');
+            break;
+          case 'Mechanic':
+            navigate('/dashboard/mechanic');
+            break;
+          case 'Recepcionist':
+            navigate('/dashboard/receptionist');
+            break;
+          default:
+            navigate('/');
+        }
       }, 100);
 
     } catch {
