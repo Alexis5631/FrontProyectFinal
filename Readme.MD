@@ -40,5 +40,6 @@ git clone https://github.com/Alexis5631/FrontProyectFinal.git
 cd FrontProyectFinal
 cd proyect
 npm install
+npm install clsx
 npm run dev
 ```

@@ -25,6 +25,7 @@ export function DetallesOrden() {
     const [estados, setStates] = useState<State[]>([]);
     const [clientes, setClientes] = useState<Client[]>([]);
     const [vehiculos, setVehiculos] = useState<Vehicle[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
 
     const [isLoading, setIsLoading] = useState(false);
 
@@ -426,6 +427,43 @@ export function DetallesOrden() {
                                 {selectedDetalles ? 'Editar Detalle' : 'Nuevo Detalle'}
                             </h2>
                             <div className="space-y-4">
+                                <Select
+                                    label="Cliente *"
+                                    name="cliente"
+                                    value={selectedClientId || ''}
+                                    onChange={e => {
+                                        const clientId = Number(e.target.value);
+                                        setSelectedClientId(clientId);
+                                        setFormValues(prev => ({ ...prev, idClient: clientId, idVehicle: undefined, idOrder: undefined }));
+                                    }}
+                                    className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                                >
+                                    <option value="">Seleccionar cliente</option>
+                                    {clientes.map(cliente => (
+                                        <option key={cliente.id} value={cliente.id}>
+                                            {cliente.name} {cliente.lastName}
+                                        </option>
+                                    ))}
+                                </Select>
+                                {selectedClientId && (
+                                    <Select
+                                        label="Vehículo *"
+                                        name="idVehicle"
+                                        value={formValues.idVehicle || ''}
+                                        onChange={e => {
+                                            const vehicleId = Number(e.target.value);
+                                            setFormValues(prev => ({ ...prev, idVehicle: vehicleId }));
+                                        }}
+                                        className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                                    >
+                                        <option value="">Seleccionar vehículo</option>
+                                        {vehiculos.filter(v => v.idClient === selectedClientId).map(vehiculo => (
+                                            <option key={vehiculo.id} value={vehiculo.id}>
+                                                {vehiculo.brand} - {vehiculo.model} ({vehiculo.serialNumberVIN})
+                                            </option>
+                                        ))}
+                                    </Select>
+                                )}
                                 <Select 
                                     label="Orden de Servicio *" 
                                     name="idOrder" 
