@@ -129,18 +129,34 @@ export function Facturacion() {
       const vehicle = getVehicleFromServiceOrder(serviceOrder);
       const client = vehicle ? getClientFromVehicle(vehicle) : undefined;
       const response = await generateInvoice(serviceOrder.id);
+      console.log('generateInvoice response:', response);
       if (response && response.id) {
         alert('Factura generada exitosamente');
         const newInvoicesData = await getInvoice();
-        if (newInvoicesData) setFacturas(newInvoicesData);
+        console.log('newInvoicesData:', newInvoicesData);
         const nuevaFactura = newInvoicesData?.find(f => f.id === response.id);
-        setFacturaGenerada(nuevaFactura || null);
+        console.log('nuevaFactura:', nuevaFactura);
+        setFacturaGenerada(nuevaFactura || response || null);
       } else {
         alert('Factura generada exitosamente');
       }
-    } catch (error) {
-      console.error('Factura generada exitosamente:', error);
-      alert('Factura generada exitosamente');
+    } catch (error: any) {
+      let errorMsg = 'Error generando factura';
+      if (error && error.message) {
+        try {
+          // Try to parse error message if it's a JSON string
+          const parsed = JSON.parse(error.message);
+          if (parsed && parsed.message) {
+            errorMsg = parsed.message;
+          } else {
+            errorMsg = error.message;
+          }
+        } catch {
+          errorMsg = error.message;
+        }
+      }
+      alert(errorMsg);
+      console.error('Error generando factura:', error);
     }
   };
 

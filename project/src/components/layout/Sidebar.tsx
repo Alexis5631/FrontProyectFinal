@@ -31,7 +31,7 @@ const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard/admin', icon: LayoutDashboard, roles: ['Administrator'] },
   { name: 'Dashboard', href: '/dashboard/mechanic', icon: LayoutDashboard, roles: ['Mechanic'] },
   { name: 'Dashboard', href: '/dashboard/receptionist', icon: LayoutDashboard, roles: ['Recepcionist'] },
-  { name: 'Service Orders', href: '/orders', icon: Wrench, roles: ['Mechanic', 'Recepcionist', 'Administrator'] },
+  { name: 'Order Details', href: '/orders', icon: Wrench, roles: ['Mechanic', 'Recepcionist', 'Administrator'] },
   { name: 'Invoices', href: '/invoices', icon: FileText, roles: ['Mechanic', 'Administrator'] },
   { name: 'Clients', href: '/clients', icon: Users, roles: ['Recepcionist', 'Administrator'] },
   { name: 'Vehicles', href: '/vehicles', icon: Car, roles: ['Recepcionist', 'Administrator'] },
