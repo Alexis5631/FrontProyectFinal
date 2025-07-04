@@ -1,83 +1,63 @@
 import type { Inventory } from "../types";
 
 const URL_API = "http://localhost:5202";
-const myHeaders = new Headers({
-    "Content-Type": "application/json"
-});
+
+function getHeaders() {
+  const token = localStorage.getItem('token') || '';
+  return {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  };
+}
 
 export const getInventory = async (): Promise<Inventory[] | null> => {
-    try {
-        const response = await fetch(`${URL_API}/api/Inventory`, {
-            method: 'GET',
-            headers: myHeaders
-        });
-
-        switch (response.status) {
-            case 200:
-                const data: Inventory[] = await response.json();
-                return data;
-            case 401:
-                console.error("No autorizado o token inválido");
-                break;
-            case 404:
-                console.error("El Inventario no existe");
-                break;
-            default:
-                console.error("Error inesperado. Contacte al administrador.");
-        }
-    } catch (error) {
-        console.error("Error de red o servidor:", error);
+  try {
+    const response = await fetch(`${URL_API}/api/Inventory`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
+    if (response.ok) {
+      return await response.json();
     }
-
-    return null; // en caso de error
+    console.error(`GET /api/Inventory falló con status ${response.status}`);
+  } catch (error) {
+    console.error("Error de red o servidor en getInventory:", error);
+  }
+  return null;
 };
 
-export const postInventory = async (datos: Inventory): Promise<any | undefined> => {
-    try {
-        // Remove id if present
-        const { id, ...clientData } = datos;
-        console.log("Datos enviados a postInventory:", clientData);
 
-        const response = await fetch(`${URL_API}/api/Inventory`, {
-            method: "POST",
-            headers: myHeaders,
-            body: JSON.stringify(clientData)
-        });
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Error en la solicitud POST: ${response.status} - ${errorText}`);
-            return undefined;
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error en la solicitud POST:', error);
-    }
-}
+export const postInventory = async (datos: Inventory): Promise<any> => {
+  // 2) quitamos el id antes de enviar
+  const { id, ...inventoryData } = datos;
+  console.log("📤 postInventory enviando:", inventoryData);
 
-export const putInventory = async (datos: Inventory, id: number | string): Promise<Response | undefined> => {
-    try {
-        return await fetch(`${URL_API}/api/Inventory/${id}`, {
-            method: "PUT",
-            headers: myHeaders,
-            body: JSON.stringify(datos)
-        });
-    } catch (error) {
-        console.error('Error en la solicitud PUT:', error);
-    }
-}
+  const response = await fetch(`${URL_API}/api/Inventory`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(inventoryData)
+  });
 
-export const deleteInventory = async (id: number | string): Promise<Response | undefined> => {
-    try {
-        const response = await fetch(`${URL_API}/api/Inventory/${id}`, {
-            method: "DELETE",
-            headers: myHeaders,
-        });
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Error en la solicitud DELETE: ${response.status} - ${errorText}`);
-        }
-        return response;
-    } catch (error) {
-        console.error('Error en la solicitud DELETE:', error);
-    }
-}
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`POST /api/Inventory ERROR ${response.status}:`, errorText);
+    throw new Error(errorText || `Error ${response.status}`);
+  }
+
+  // 3) el servidor responde con Created (201) y el objeto creado (incluyendo el nuevo id)
+  return response.json();
+};
+
+export const putInventory = (datos: Inventory, id: number | string) =>
+  fetch(`${URL_API}/api/Inventory/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(datos)
+  });
+
+
+export const deleteInventory = (id: number | string) =>
+  fetch(`${URL_API}/api/Inventor/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });

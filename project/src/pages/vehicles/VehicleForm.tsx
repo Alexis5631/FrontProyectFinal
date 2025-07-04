@@ -90,24 +90,6 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
         response = await putVehicle(data as any, vehicle.id);
       }
       
-      // if (!response || !response.ok) {
-      //   // Manejar diferentes tipos de errores HTTP
-      //   if (response?.status === 404) {
-      //     alert('El vehículo no existe o ya fue eliminado.');
-      //   } else if (response?.status === 409) {
-      //     alert('Ya existe un vehículo con este VIN. Por favor, verifica el número de serie.');
-      //   } else if (response?.status === 400) {
-      //     alert('Datos inválidos. Por favor, verifica la información ingresada.');
-      //   } else if (response?.status === 403) {
-      //     alert('No tienes permisos para realizar esta acción.');
-      //   } else if (response?.status === 422) {
-      //     alert('El cliente seleccionado no existe o no es válido.');
-      //   } else {
-      //     alert('Error al guardar el vehículo. Por favor, inténtalo de nuevo.');
-      //   }
-      //   return;
-      // }
-      
       alert(mode === 'create' ? 'Vehículo creado exitosamente.' : 'Vehículo actualizado exitosamente.');
       onSuccess();
     } catch (error) {

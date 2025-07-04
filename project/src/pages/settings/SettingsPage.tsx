@@ -27,6 +27,7 @@ export const SettingsPage: React.FC = () => {
   const [filterEstado, setFilterEstado] = useState('');
   const [clientes, setClientes] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
 
   useEffect(() => {
     loadData();
@@ -410,26 +411,45 @@ export const SettingsPage: React.FC = () => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <Select 
-                    name="idVehicle" 
-                    label="Vehículo" 
-                    value={formValues.idVehicle || ''} 
+                  {/* Selección de Cliente */}
+                  <Select
+                    label="Cliente *"
+                    name="cliente"
+                    value={selectedClientId || ''}
                     onChange={e => {
-                      const value = e.target.value;
-                      setFormValues(prev => ({
-                        ...prev,
-                        idVehicle: value ? Number(value) : undefined
-                      }));
-                    }} 
+                      const clientId = Number(e.target.value);
+                      setSelectedClientId(clientId);
+                      setFormValues(prev => ({ ...prev, idClient: clientId, idVehicle: undefined }));
+                    }}
                     className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
                   >
-                    <option value="">Seleccionar vehículo</option>
-                    {vehiculos.map(vehiculo => (
-                      <option key={vehiculo.id} value={vehiculo.id}>
-                        {vehiculo.brand} {vehiculo.model}
+                    <option value="">Seleccionar cliente</option>
+                    {clientes.map(cliente => (
+                      <option key={cliente.id} value={cliente.id}>
+                        {cliente.name} {cliente.lastName}
                       </option>
                     ))}
                   </Select>
+                  {/* Selección de Vehículo solo si hay cliente seleccionado */}
+                  {selectedClientId && (
+                    <Select
+                      label="Vehículo *"
+                      name="idVehicle"
+                      value={formValues.idVehicle || ''}
+                      onChange={e => {
+                        const vehicleId = Number(e.target.value);
+                        setFormValues(prev => ({ ...prev, idVehicle: vehicleId }));
+                      }}
+                      className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                    >
+                      <option value="">Seleccionar vehículo</option>
+                      {vehiculos.filter(v => v.idClient === selectedClientId).map(vehiculo => (
+                        <option key={vehiculo.id} value={vehiculo.id}>
+                          {vehiculo.brand} {vehiculo.model} ({vehiculo.serialNumberVIN})
+                        </option>
+                      ))}
+                    </Select>
+                  )}
                   
                   <Select 
                     label="Mecánico" 

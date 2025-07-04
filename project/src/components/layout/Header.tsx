@@ -79,20 +79,20 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, title }) => {
               >
                 <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
                   <span className="text-xs font-medium text-white">
-                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    {user?.name?.[0]}{user?.lastName?.[0]}
                   </span>
                 </div>
                 <span className="hidden md:block text-sm font-medium text-gray-700">
-                  {user?.firstName} {user?.lastName}
+                  {user?.name} {user?.lastName}
                 </span>
               </Button>
 
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
                   <div className="px-4 py-2 text-sm text-gray-700 border-b">
-                    <div className="font-medium">{user?.firstName} {user?.lastName}</div>
+                    <div className="font-medium">{user?.name} {user?.lastName}</div>
                     <div className="text-gray-500">{user?.email}</div>
-                    <div className="text-xs text-gray-400 capitalize">{user?.role}</div>
+                    <div className="text-xs text-gray-400 capitalize">{user?.rol}</div>
                   </div>
                   <button
                     onClick={handleSettingsClick}

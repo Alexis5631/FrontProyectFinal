@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { LoginPage } from './pages/auth/LoginPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
@@ -11,6 +11,24 @@ import { AuditLogsPage } from './pages/audit/AuditLogsPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import { Facturacion } from './pages/invoices/InvoicesPage';
 import { DetallesOrden } from './pages/orders/OrdersPage';
+import { AdminDashboard } from './pages/dashboard/AdminDashboard';
+import { MechanicDashboard } from './pages/dashboard/MechanicDashboard';
+import { ReceptionistDashboard } from './pages/dashboard/ReceptionistDashboard';
+
+function RoleBasedRedirect() {
+  const { user, isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  switch (user?.rol) {
+    case 'Administrator':
+      return <Navigate to="/dashboard/admin" replace />;
+    case 'Mechanic':
+      return <Navigate to="/dashboard/mechanic" replace />;
+    case 'Recepcionist':
+      return <Navigate to="/dashboard/receptionist" replace />;
+    default:
+      return <Navigate to="/unauthorized" replace />;
+  }
+}
 
 function App() {
   return (
@@ -20,16 +38,12 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
+            element={<RoleBasedRedirect />}
           />
           <Route
             path="/clients"
             element={
-              <ProtectedRoute roles={['admin', 'receptionist']}>
+              <ProtectedRoute allowedRoles={['Recepcionist', 'Administrator']}>
                 <ClientsPage />
               </ProtectedRoute>
             }
@@ -37,7 +51,7 @@ function App() {
           <Route
             path="/vehicles"
             element={
-              <ProtectedRoute roles={['admin', 'receptionist']}>
+              <ProtectedRoute allowedRoles={['Recepcionist', 'Administrator']}>
                 <VehiclesPage />
               </ProtectedRoute>
             }
@@ -45,7 +59,7 @@ function App() {
           <Route
             path="/orders"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['Mechanic', 'Recepcionist', 'Administrator']}>
                 <DetallesOrden />
               </ProtectedRoute>
             }
@@ -61,7 +75,7 @@ function App() {
           <Route
             path="/invoices"
             element={
-              <ProtectedRoute roles={['admin', 'receptionist']}>
+              <ProtectedRoute allowedRoles={['Mechanic', 'Administrator']}>
                 <Facturacion />
               </ProtectedRoute>
             }
@@ -91,6 +105,30 @@ function App() {
                   <p className="text-gray-600">You don't have permission to access this page.</p>
                 </div>
               </div>
+            }
+          />
+          <Route
+            path="/dashboard/admin"
+            element={
+              <ProtectedRoute allowedRoles={['Administrator']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/mechanic"
+            element={
+              <ProtectedRoute allowedRoles={['Mechanic']}>
+                <MechanicDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/receptionist"
+            element={
+              <ProtectedRoute allowedRoles={['Recepcionist']}>
+                <ReceptionistDashboard />
+              </ProtectedRoute>
             }
           />
           <Route path="*" element={<Navigate to="/" replace />} />
